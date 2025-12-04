@@ -9,6 +9,7 @@
 #define HashMap_h
 
 #include "HashStrategies.h"
+#include "ArrayList.h"
 
 #include <algorithm>
 
@@ -27,11 +28,11 @@ private:
     HashNode<K, V>** buckets; // Array of pointers to nodes
     size_t size;
     size_t capacity;
-    double maxLoadFactor
+    double maxLoadFactor;
     size_t threshold;
     
     static const size_t DEFAULT_CAPACITY = 16;
-    static const double DEFAULT_LOAD_FACTOR = 0.75;
+    static constexpr double DEFAULT_LOAD_FACTOR = 0.75;
     
     /**
      * Calculates the bucket index for a specific key.
@@ -77,7 +78,6 @@ private:
         capacity = newCapacity;
         threshold = static_cast<size_t>(capacity * maxLoadFactor);
     }
-}
 public:
     // --- Lifecycle Methods ---
 
@@ -86,7 +86,7 @@ public:
      * Uses default arguments to handle empty init calls: HashMap map;
      */
     HashMap(size_t initCap = DEFAULT_CAPACITY, double loadFactor = DEFAULT_LOAD_FACTOR)
-        : count(0), maxLoadFactor(loadFactor) {
+        : size(0), maxLoadFactor(loadFactor) {
         
         this->capacity = std::max((size_t)1, initCap);
         this->threshold = static_cast<size_t>(this->capacity * maxLoadFactor);
@@ -112,7 +112,7 @@ public:
      */
     void Put(K key, V value) {
         // 1. Check if resize is needed BEFORE adding
-        if (count >= threshold) resize(capacity * 2);
+        if (size >= threshold) resize(capacity * 2);
 
         unsigned long bucketIndex = calculateBucket(key, capacity);
         HashNode<K, V>* entry = buckets[bucketIndex];
@@ -132,7 +132,7 @@ public:
         newNode->next = buckets[bucketIndex];
         buckets[bucketIndex] = newNode;
         
-        ++count;
+        ++size;
     }
 
     /**
@@ -149,7 +149,7 @@ public:
                 else prev->next = entry->next; // Removing Middle/Tail
                 
                 delete entry;
-                count--;
+                size--;
                 return;
             }
             prev = entry;
@@ -170,7 +170,7 @@ public:
             }
             buckets[i] = nullptr;
         }
-        count = 0;
+        size = 0;
     }
 
     // --- Accessors ---
@@ -210,7 +210,7 @@ public:
         }
 
         // 2. Not found? Create default value
-        if (count >= threshold) {
+        if (size >= threshold) {
             resize(capacity * 2);
             bucketIndex = calculateBucket(key, capacity); // Re-calc index after resize
         }
@@ -219,7 +219,7 @@ public:
         HashNode<K, V>* newNode = new HashNode<K, V>(key, defaultValue);
         newNode->next = buckets[bucketIndex];
         buckets[bucketIndex] = newNode;
-        count++;
+        size++;
         
         return newNode->value;
     }
@@ -228,10 +228,33 @@ public:
 
     bool ContainsKey(K key) const { return Get(key) != nullptr; }
 
-    size_t Size() const { return count; }
+    size_t Count() const { return size; }
 
-    bool IsEmpty() const { return count == 0; }
+    bool IsEmpty() const { return size == 0; }
     
+    ArrayList<K> Keys() {
+        ArrayList<K> keys;
+        for (size_t i = 0; i < capacity; ++i) {
+            HashNode<K, V>* entry = buckets[i];
+            while (entry != nullptr) {
+                keys.Add(entry->key);
+                entry = entry->next;
+            }
+        }
+        return keys;
+    }
+    
+    ArrayList<V> Values() {
+        ArrayList<V> values;
+        for (size_t i = 0; i < capacity; ++i) {
+            HashNode<K, V>* entry = buckets[i];
+            while (entry != nullptr) {
+                values.Add(entry->value);
+                entry = entry->next;
+            }
+        }
+        return values;
+    }
 };
 
 #endif /* HashMap_h */
