@@ -101,3 +101,44 @@ void ConsoleView::ShowInfo(string message) {
     ResetColor();
 }
 
+// ===== TABLE IMPLEMENTATIONS =====
+
+void ConsoleView::PrintTableHeader(string columns[], int colWidths[], int numCols) {
+    PrintLine(0, 0, colWidths[0] + colWidths[1] + colWidths[2] + 5, '═');
+    
+    cout << "│";
+    for (int i = 0; i < numCols; i++) {
+        cout << " " << left << setw(colWidths[i]) << columns[i] << " │";
+    }
+    cout << endl;
+    PrintTableSeparator();
+}
+
+void ConsoleView::PrintTableRow(string col1, string col2, string col3) {
+    cout << "│ " << left << setw(18) << col1 
+         << " │ " << right << setw(12) << col2 
+         << " │ " << right << setw(14) << col3 << " │" << endl;
+}
+
+/// Prints separator between table rows
+void ConsoleView::PrintTableSeparator() {
+    cout << "├" << string(20, '─') << "┼" 
+         << string(14, '─') << "┼" << string(16, '─') << "┤" << endl;
+}
+
+string ConsoleView::FormatCurrency(long amount) {
+    stringstream ss;
+    ss << fixed << setprecision(0);
+    string numStr = to_string(amount);
+    string result;
+    int count = 0;
+    
+    for (int i = numStr.length() - 1; i >= 0; i--) {
+        result = numStr[i] + result;
+        count++;
+        if (count % 3 == 0 && i > 0) {
+            result = "," + result;
+        }
+    }
+    return result + " VND";
+}
