@@ -17,7 +17,7 @@ char IdGenerator::GetRandomChar() {
     return charset[dis(gen)];
 }
 
-std::string IdGenerator::GenerateId(const std::string& prefix = "") {
+std::string IdGenerator::GenerateId(const std::string& prefix) {
     std::stringstream ss;
     
     if (!prefix.empty()) ss << prefix << "-";

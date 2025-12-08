@@ -5,8 +5,8 @@
 //  Created by Nguyen Dinh Minh Huy on 4/12/25.
 //
 
-#ifndef Date_h
-#define Date_h
+#ifndef DATE_H
+#define DATE_H
 
 #include <iostream>
 #include <string>
@@ -14,6 +14,12 @@
 #include <iomanip>
 #include <ctime>
 
+/**
+ * @class Date
+ * @brief Represents a calendar date (Day/Month/Year).
+ * * Provides operators for comparison (<, >, ==) and helpers
+ * for validation and formatting.
+ */
 class Date {
 private:
     int day;
@@ -21,19 +27,23 @@ private:
     int year;
     
 public:
-    // Constructors
+    // ==========================================
+    // 1. CONSTRUCTORS
+    // ==========================================
     Date();
     Date(int d, int m, int y);
-    
-    // Destructors
     ~Date();
     
-    // Getters
-    int getDay() const;
-    int getMonth() const;
-    int getYear() const;
+    // ==========================================
+    // 2. GETTERS
+    // ==========================================
+    int GetDay() const;
+    int GetMonth() const;
+    int GetYear() const;
     
-    // Operators
+    // ==========================================
+    // 3. OPERATORS
+    // ==========================================
     bool operator<(const Date& other) const;
     bool operator>(const Date& other) const;
     bool operator==(const Date& other) const;
@@ -42,25 +52,33 @@ public:
     bool operator>=(const Date& other) const;
     bool operator!=(const Date& other) const;
     
-    // Others
+    // ==========================================
+    // 4. UTILITIES
+    // ==========================================
     
+    /**
+     * @brief Parses a string in "DD/MM/YYYY" format.
+     */
     static Date FromString(const std::string& dateStr);
     
+    /**
+     * @brief Returns string in "DD/MM/YYYY" format.
+     */
     std::string ToString() const;
+    
     static bool IsLeapYear(int y);
-    
     static int DaysInMonth(int m, int y);
-    
     static Date GetEndOfMonth(int m, int y);
+    
+    /**
+     * @brief Returns current system date.
+     */
+    static Date GetTodayDate();
     
     bool IsValid() const;
     
-    static Date GetTodayDate();
-    
     friend std::istream& operator>>(std::istream& is, Date& d);
-    
     friend std::ostream& operator<<(std::ostream& os, const Date& d);
 };
 
-
-#endif /* Date_h */
+#endif // DATE_H

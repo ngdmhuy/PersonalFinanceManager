@@ -12,17 +12,23 @@
 #include <random>
 #include <sstream>
 
+/**
+ * @class IdGenerator
+ * @brief Generates high-entropy unique identifiers.
+ */
 class IdGenerator {
 private:
-    /// Get random alphanumeric character
     static char GetRandomChar();
     
     static const size_t BLOCK_NUMBER = 3;
     static const size_t CHARS_PER_BLOCK = 4;
     
 public:
-    /// Generates a "High Entropy Alphanumeric ID" with an optional prefix to indicate whether Transaction, Wallet, Category,...
-    /// e.g. Transaction: TRX-a9K2-mP5v-Qr8z
+    /**
+     * @brief Generates a formatted ID string.
+     * Format: PREFIX-XXXX-XXXX-XXXX
+     * @param prefix A string prefix (e.g., "TRX", "WAL").
+     */
     static std::string GenerateId(const std::string& prefix);
 };
 

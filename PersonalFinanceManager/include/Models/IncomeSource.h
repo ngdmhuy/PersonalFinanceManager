@@ -10,28 +10,30 @@
 
 #include <string>
 
+/**
+ * @class IncomeSource
+ * @brief Represents a classification for Income (e.g., Salary, Freelance).
+ */
 class IncomeSource {
 private:
     std::string id;
     std::string name;
     
 public:
-    // Constructors
     IncomeSource();
     IncomeSource(std::string id, std::string name);
-    
-    // Destructors
     ~IncomeSource();
     
-    // Getters
-    std::string getId() const;
-    std::string getName() const;
+    // Accessors
+    std::string GetId() const;
+    std::string GetName() const;
     
-    // Setters
-    void setName(const std::string& n);
+    void SetName(const std::string& n);
     
     // Display
     std::string ToString() const;
+
+    // TODO [M1]: Add toBinary(ofstream&) and fromBinary(ifstream&) here
 };
 
 #endif // !IncomeSource_h

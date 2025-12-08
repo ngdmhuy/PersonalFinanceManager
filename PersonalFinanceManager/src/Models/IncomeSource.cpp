@@ -7,19 +7,19 @@
 
 #include "../../include/Models/IncomeSource.h"
 
-// Constructors
 IncomeSource::IncomeSource() { }
-IncomeSource::IncomeSource(std::string id, std::string name) : id(id), name(name) { }
 
-// Destructors
+IncomeSource::IncomeSource(std::string id, std::string name)
+    : id(id), name(name) {
+}
+
 IncomeSource::~IncomeSource() = default;
 
-// Getters
-std::string IncomeSource::getId() const { return id; }
-std::string IncomeSource::getName() const { return name; }
+// Accessors
+std::string IncomeSource::GetId() const { return id; }
+std::string IncomeSource::GetName() const { return name; }
 
-// Setters
-void IncomeSource::setName(const std::string& n) { name = n; }
+void IncomeSource::SetName(const std::string& n) { name = n; }
 
 // Display
 std::string IncomeSource::ToString() const {

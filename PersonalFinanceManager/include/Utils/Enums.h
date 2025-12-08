@@ -8,6 +8,8 @@
 #ifndef Enums_h
 #define Enums_h
 
+#include <string>
+
 enum class TransactionType {
     Income,
     Expense
@@ -28,6 +30,11 @@ enum class IdPrefix {
     Recurring
 };
 
+/**
+ * @class EnumHelper
+ * @brief Static helpers to convert Enums to/from Strings.
+ * Useful for ID generation and UI display.
+ */
 class EnumHelper {
 public:
     static std::string IdPrefixToString(IdPrefix prefix) {
@@ -37,7 +44,7 @@ public:
             case IdPrefix::Category:        return "CAT";
             case IdPrefix::IncomeSource:    return "SRC";
             case IdPrefix::Recurring:       return "REC";
-            default:                        return "UNK"; // Unknown
+            default:                        return "UNK";
         }
     }
     
@@ -56,4 +63,4 @@ public:
     }
 };
 
-#endif /* Enums_h */
+#endif // !Enums_h

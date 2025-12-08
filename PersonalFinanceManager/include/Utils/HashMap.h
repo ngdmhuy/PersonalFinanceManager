@@ -13,6 +13,10 @@
 
 #include <algorithm>
 
+/**
+ * @struct HashNode
+ * @brief Internal node structure for the HashMap chaining collision resolution.
+ */
 template <typename K, typename V>
 struct HashNode {
     K key;
@@ -22,6 +26,11 @@ struct HashNode {
     HashNode(K k, V v) : key(k), value(v), next(nullptr) {}
 };
 
+/**
+ * @class HashMap
+ * @brief Key-Value store implementing a Hash Table with Chaining.
+ * * Uses 'HashStrategies.h' to handle hashing of different types (int, string, char*).
+ */
 template <typename K, typename V>
 class HashMap {
 private:
@@ -35,56 +44,47 @@ private:
     static constexpr double DEFAULT_LOAD_FACTOR = 0.75;
     
     /**
-     * Calculates the bucket index for a specific key.
-     * Uses the Hasher strategy to support different key types.
+     * @brief Calculates the bucket index for a specific key.
      */
-    unsigned long calculateBucket(const K& key, size_t currentCapacity) const {
-        unsigned long rawHash = Hasher<K>::getHash(key);
+    unsigned long CalculateBucket(const K& key, size_t currentCapacity) const {
+        // [Refactor] Updated to PascalCase call
+        unsigned long rawHash = Hasher<K>::GetHash(key);
         return rawHash % currentCapacity;
     }
 
     /**
-     * Resizes the internal array when the load factor is exceeded.
-     * Rehashes all existing nodes into the new buckets.
+     * @brief Resizes internal storage when load factor is exceeded.
      */
-    void resize(size_t newCapacity) {
-        // 1. Allocate new, larger memory
+    void Resize(size_t newCapacity) {
         HashNode<K, V>** newBuckets = new HashNode<K, V>*[newCapacity];
         for (size_t i = 0; i < newCapacity; ++i)
             newBuckets[i] = nullptr;
 
-        // 2. Rehash all existing nodes
         for (size_t i = 0; i < capacity; ++i) {
             HashNode<K, V>* entry = buckets[i];
             while (entry != nullptr) {
-                HashNode<K, V>* nextNode = entry->next; // Save pointer to next
+                HashNode<K, V>* nextNode = entry->next;
                 
-                // Recalculate index for new capacity
-                unsigned long newIndex = calculateBucket(entry->key, newCapacity);
+                unsigned long newIndex = CalculateBucket(entry->key, newCapacity);
                 
-                // Insert at HEAD of the new bucket (O(1) operation)
                 entry->next = newBuckets[newIndex];
                 newBuckets[newIndex] = entry;
                 
-                entry = nextNode; // Move to next node in old chain
+                entry = nextNode;
             }
         }
 
-        // 3. Clean up old array shell (nodes were moved, not deleted)
         delete[] buckets;
-        
-        // 4. Update state
         buckets = newBuckets;
         capacity = newCapacity;
         threshold = static_cast<size_t>(capacity * maxLoadFactor);
     }
-public:
-    // --- Lifecycle Methods ---
 
-    /**
-     * Main Constructor.
-     * Uses default arguments to handle empty init calls: HashMap map;
-     */
+public:
+    // ==========================================
+    // 1. CONSTRUCTORS & DESTRUCTOR
+    // ==========================================
+    
     HashMap(size_t initCap = DEFAULT_CAPACITY, double loadFactor = DEFAULT_LOAD_FACTOR)
         : size(0), maxLoadFactor(loadFactor) {
         
@@ -96,38 +96,29 @@ public:
             buckets[i] = nullptr;
     }
 
-    /**
-     * Destructor.
-     * Cleans up all nodes and the bucket array.
-     */
     ~HashMap() {
         Clear();
         delete[] buckets;
     }
 
-    // --- Core Operations (CRUD) ---
+    // ==========================================
+    // 2. CORE OPERATIONS (CRUD)
+    // ==========================================
 
-    /**
-     * Inserts a key-value pair. Updates value if key exists.
-     */
     void Put(K key, V value) {
-        // 1. Check if resize is needed BEFORE adding
-        if (size >= threshold) resize(capacity * 2);
+        if (size >= threshold) Resize(capacity * 2);
 
-        unsigned long bucketIndex = calculateBucket(key, capacity);
+        unsigned long bucketIndex = CalculateBucket(key, capacity);
         HashNode<K, V>* entry = buckets[bucketIndex];
         
-        // 2. Check for Update (Key already exists)
         while (entry != nullptr) {
-            if (KeyComparer<K>::areEqual(entry->key, key)) {
+            if (KeyComparer<K>::AreEqual(entry->key, key)) {
                 entry->value = value;
                 return;
             }
             entry = entry->next;
         }
         
-        // 3. Insert New Node at HEAD (Fastest method)
-        // MUST use 'new' to allocate on heap, otherwise it deletes after scope ends
         HashNode<K, V>* newNode = new HashNode<K, V>(key, value);
         newNode->next = buckets[bucketIndex];
         buckets[bucketIndex] = newNode;
@@ -135,18 +126,15 @@ public:
         ++size;
     }
 
-    /**
-     * Removes a key-value pair from the map.
-     */
     void Remove(const K& key) {
-        unsigned long bucketIndex = calculateBucket(key, capacity);
+        unsigned long bucketIndex = CalculateBucket(key, capacity);
         HashNode<K, V>* prev = nullptr;
         HashNode<K, V>* entry = buckets[bucketIndex];
 
         while (entry != nullptr) {
-            if (KeyComparer<K>::areEqual(entry->key, key)) {
-                if (prev == nullptr) buckets[bucketIndex] = entry->next; // Removing Head
-                else prev->next = entry->next; // Removing Middle/Tail
+            if (KeyComparer<K>::AreEqual(entry->key, key)) {
+                if (prev == nullptr) buckets[bucketIndex] = entry->next;
+                else prev->next = entry->next;
                 
                 delete entry;
                 size--;
@@ -157,9 +145,6 @@ public:
         }
     }
 
-    /**
-     * Removes all items but keeps the map ready for reuse.
-     */
     void Clear() {
         for (size_t i = 0; i < capacity; ++i) {
             HashNode<K, V>* entry = buckets[i];
@@ -173,18 +158,16 @@ public:
         size = 0;
     }
 
-    // --- Accessors ---
+    // ==========================================
+    // 3. ACCESSORS
+    // ==========================================
 
-    /**
-     * Returns a pointer to the value, or nullptr if not found.
-     * Returning a pointer allows checking for existence without exception.
-     */
     V* Get(K key) const {
-        unsigned long bucketIndex = calculateBucket(key, capacity);
+        unsigned long bucketIndex = CalculateBucket(key, capacity);
         HashNode<K, V>* entry = buckets[bucketIndex];
         
         while (entry != nullptr) {
-            if (KeyComparer<K>::areEqual(entry->key, key)) {
+            if (KeyComparer<K>::AreEqual(entry->key, key)) {
                 return &(entry->value);
             }
             entry = entry->next;
@@ -192,30 +175,23 @@ public:
         return nullptr;
     }
 
-    /**
-     * Subscript Operator.
-     * Returns reference to value. Creates default if key missing.
-     * Usage: map["Food"] = 100;
-     */
     V& operator[](const K& key) {
-        unsigned long bucketIndex = calculateBucket(key, capacity);
+        unsigned long bucketIndex = CalculateBucket(key, capacity);
         HashNode<K, V>* entry = buckets[bucketIndex];
 
-        // 1. Search existing
         while (entry != nullptr) {
-            if (KeyComparer<K>::areEqual(entry->key, key)) {
+            if (KeyComparer<K>::AreEqual(entry->key, key)) {
                 return entry->value;
             }
             entry = entry->next;
         }
 
-        // 2. Not found? Create default value
         if (size >= threshold) {
-            resize(capacity * 2);
-            bucketIndex = calculateBucket(key, capacity); // Re-calc index after resize
+            Resize(capacity * 2);
+            bucketIndex = CalculateBucket(key, capacity);
         }
 
-        V defaultValue = V(); // Calls default constructor of type V
+        V defaultValue = V();
         HashNode<K, V>* newNode = new HashNode<K, V>(key, defaultValue);
         newNode->next = buckets[bucketIndex];
         buckets[bucketIndex] = newNode;
@@ -224,7 +200,9 @@ public:
         return newNode->value;
     }
 
-    // --- State Checks ---
+    // ==========================================
+    // 4. STATE & UTILITIES
+    // ==========================================
 
     bool ContainsKey(K key) const { return Get(key) != nullptr; }
 
@@ -257,4 +235,4 @@ public:
     }
 };
 
-#endif /* HashMap_h */
+#endif // !HashMap_h

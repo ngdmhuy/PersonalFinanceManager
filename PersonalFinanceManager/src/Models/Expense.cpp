@@ -8,4 +8,6 @@
 #include "../../include/Models/Expense.h"
 
 Expense::Expense(std::string id, std::string walletId, std::string catId, double amount, Date date, std::string desc)
-: Transaction(id, walletId, catId, amount, TransactionType::Expense, date, desc) { }
+    : Transaction(id, walletId, catId, amount, TransactionType::Expense, date, desc) {
+    // Type is automatically set to Expense by the base constructor call
+}

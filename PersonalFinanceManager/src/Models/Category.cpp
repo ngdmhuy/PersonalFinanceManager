@@ -7,19 +7,19 @@
 
 #include "../../include/Models/Category.h"
 
-// Constructors
 Category::Category() { }
-Category::Category(std::string id, std::string name) : id(id), name(name) { }
 
-// Destructors
+Category::Category(std::string id, std::string name)
+    : id(id), name(name) {
+}
+
 Category::~Category() = default;
 
-// Getters
-std::string Category::getId() const { return id; }
-std::string Category::getName() const { return name; }
+// Accessors
+std::string Category::GetId() const { return id; }
+std::string Category::GetName() const { return name; }
 
-// Setters
-void Category::setName(const std::string& n) { name = n; }
+void Category::SetName(const std::string& n) { name = n; }
 
 // Display
 std::string Category::ToString() const {

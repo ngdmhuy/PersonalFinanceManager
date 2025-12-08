@@ -7,32 +7,51 @@
 
 #include "../../include/Models/Transaction.h"
 
-// Constructor
-Transaction::Transaction() : amount(0.0), type(TransactionType::Expense) { }
-Transaction::Transaction(std::string id, std::string walletId, std::string catId, double amount, TransactionType type, Date date, std::string desc = "") : id(id), walletId(walletId), categoryId(catId), amount(amount), type(type), date(date), description(desc) { }
+// ==========================================
+// 1. CONSTRUCTORS
+// ==========================================
 
-// Getters
-std::string Transaction::getId() const { return id; }
-std::string Transaction::getWalletId() const { return walletId; }
-std::string Transaction::getCategoryId() const { return categoryId; }
-double Transaction::getAmount() const { return amount; }
-Date Transaction::getDate() const { return date; }
-TransactionType Transaction::getType() const { return type; }
-std::string Transaction::getDescription() const { return description; }
+Transaction::Transaction()
+    : amount(0.0), type(TransactionType::Expense) {
+}
 
-// Setters
-void Transaction::setAmount(double a) { amount = a; }
-void Transaction::setWalletId(const std::string& w) { walletId = w; }
-void Transaction::setCategoryId(const std::string& c) { categoryId = c; }
-void Transaction::setDescription(const std::string& d) { description = d; }
-void Transaction::setDate(const Date& d) { date = d; }
+Transaction::Transaction(std::string id, std::string walletId, std::string catId, double amount, TransactionType type, Date date, std::string desc)
+    : id(id), walletId(walletId), categoryId(catId),
+      amount(amount), type(type), date(date), description(desc) {
+}
+
+// ==========================================
+// 2. GETTERS
+// ==========================================
+
+std::string Transaction::GetId() const { return id; }
+std::string Transaction::GetWalletId() const { return walletId; }
+std::string Transaction::GetCategoryId() const { return categoryId; }
+double Transaction::GetAmount() const { return amount; }
+Date Transaction::GetDate() const { return date; }
+TransactionType Transaction::GetType() const { return type; }
+std::string Transaction::GetDescription() const { return description; }
+
+// ==========================================
+// 3. SETTERS
+// ==========================================
+
+void Transaction::SetAmount(double a) { amount = a; }
+void Transaction::SetWalletId(const std::string& w) { walletId = w; }
+void Transaction::SetCategoryId(const std::string& c) { categoryId = c; }
+void Transaction::SetDescription(const std::string& d) { description = d; }
+void Transaction::SetDate(const Date& d) { date = d; }
+
+// ==========================================
+// 4. DISPLAY
+// ==========================================
 
 std::string Transaction::ToString() const {
     std::stringstream ss;
-    // Format: [YYYY-MM-DD] | +/- Amount | Description
+    // Format: YYYY-MM-DD | +/- 00.00 | Description
     ss << date << " | "
-    << (type == TransactionType::Income ? "+ " : "- ")
-    << std::fixed << std::setprecision(2) << amount
-    << " | " << description;
+       << (type == TransactionType::Income ? "+ " : "- ")
+       << std::fixed << std::setprecision(2) << amount
+       << " | " << description;
     return ss.str();
 }

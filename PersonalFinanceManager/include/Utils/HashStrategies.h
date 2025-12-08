@@ -11,22 +11,26 @@
 #include <string>
 #include <cstring>
 
+/**
+ * @struct Hasher
+ * @brief Strategy pattern for calculating hash codes.
+ */
 // Default: Expects T to have a .hash() method
 template <typename T>
 struct Hasher {
-    static unsigned long getHash(const T& key) { return key.hash(); }
+    static unsigned long GetHash(const T& key) { return key.hash(); }
 };
 
 // Specialization for Integers
 template <>
 struct Hasher<int> {
-    static unsigned long getHash(int key) { return static_cast<unsigned long>(key); }
+    static unsigned long GetHash(int key) { return static_cast<unsigned long>(key); }
 };
 
-// Specialization for std::string
+// Specialization for std::string (DJB2 Algorithm)
 template <>
 struct Hasher<std::string> {
-    static unsigned long getHash(const std::string& str) {
+    static unsigned long GetHash(const std::string& str) {
         unsigned long hash = 5381;
         for (char c : str) {
             hash = ((hash << 5) + hash) + c;
@@ -38,7 +42,7 @@ struct Hasher<std::string> {
 // Specialization for C-Strings
 template <>
 struct Hasher<const char*> {
-    static unsigned long getHash(const char* str) {
+    static unsigned long GetHash(const char* str) {
         unsigned long hash = 5381;
         int c;
         while ((c = *str++))
@@ -48,19 +52,23 @@ struct Hasher<const char*> {
 };
 
 // --- STRATEGY 2: Key Comparer ---
-// Ensures comparisons work correctly for pointers vs values
 
+/**
+ * @struct KeyComparer
+ * @brief Strategy pattern for comparing keys.
+ * Handles quirks like C-string pointer comparison vs value comparison.
+ */
 template <typename T>
 struct KeyComparer {
-    static bool areEqual(const T& a, const T& b) { return a == b; }
+    static bool AreEqual(const T& a, const T& b) { return a == b; }
 };
 
 // Specialization for C-Strings
 template <>
 struct KeyComparer<const char*> {
-    static bool areEqual(const char* a, const char* b) {
+    static bool AreEqual(const char* a, const char* b) {
         return std::strcmp(a, b) == 0;
     }
 };
 
-#endif /* HashStrategies_h */
+#endif // !HashStrategies_h
