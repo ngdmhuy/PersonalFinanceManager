@@ -18,7 +18,7 @@ private:
 
 public:
     // ===== CONSOLE CONTROL FUNCTIONS =====
-
+    
     /// @brief Moves console cursor to specified position (x, y)
     /// @param x Horizontal position (column) from left edge (0 = leftmost)
     /// @param y Vertical position (row) from top edge (0 = topmost)

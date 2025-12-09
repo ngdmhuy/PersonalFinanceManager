@@ -1,11 +1,13 @@
-#include "../../include/Views/ConsoleView.h"
+#include "Views/ConsoleView.h"
 #include <iomanip>
 #include <sstream>
 
-// ===== CONSOLE CONTROL IMPLEMENTATIONS =====
+using namespace std;
+
+//CONSOLE CONTROL IMPLEMENTATIONS
 
 void ConsoleView::MoveToXY(int x, int y) {
-    COORD coord = {(short)x, (short)y};
+    COORD coord = {(SHORT)x, (SHORT)y};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
@@ -21,109 +23,149 @@ void ConsoleView::ResetColor() {
     SetColor(COLOR_NORMAL);
 }
 
-// ===== DRAWING PRIMITIVES =====
+//DRAWING IMPLEMENTATIONS
 
 void ConsoleView::PrintLine(int x, int y, int length, char ch) {
-    MoveToXY(x,y);
-    for (int i = 0; i < length; ++i) cout << ch;
+    MoveToXY(x, y);
+    for (int i = 0; i < length; i++) {
+        cout << ch;
+    }
     cout << endl;
 }
 
 void ConsoleView::PrintBox(int x, int y, int width, int height) {
-    MoveToXY(x,y);
-    cout << string(width,'=') << endl;
-    for (int i = 1; i< height - 1; ++i) {
-        MoveToXY(x,y+i);
-        cout << "║" << string(width - 2, ' ') << '║' << endl;
-    }
-    MoveToXY(x, y + height - 1);
-    cout << string(width, '=') << endl;
-}
+    // Top border: +-----+
+    MoveToXY(x, y);
+    cout << "+";
+    for (int i = 0; i < width - 2; i++) cout << "-";
+    cout << "+";
 
+    // Middle: |     |
+    for (int row = 1; row < height - 1; row++) {
+        MoveToXY(x, y + row);
+        cout << "|";
+        for (int i = 0; i < width - 2; i++) cout << " ";
+        cout << "|";
+    }
+
+    // Bottom border
+    MoveToXY(x, y + height - 1);
+    cout << "+";
+    for (int i = 0; i < width - 2; i++) cout << "-";
+    cout << "+";
+}
 
 void ConsoleView::PrintHeader(string title) {
     ClearScreen();
-    MoveToXY(0, 0);
+
+    // Top line
     SetColor(COLOR_HEADER);
-    PrintLine(0, 0, 80, '=');   
-    MoveToXY((80 - title.length()) / 2, 1);
-    cout << ' ' << title << ' ';
+    PrintLine(0, 0, 80, '=');
+
+    // Title centered on line 1
+    int startX = (80 - static_cast<int>(title.length())) / 2;
+    if (startX < 0) startX = 0;
+    MoveToXY(startX, 1);
+    cout << title;
+
+    // Separator line
     PrintLine(0, 3, 80, '-');
     ResetColor();
 }
 
 void ConsoleView::PrintFooter(string message) {
+    // Separator
     MoveToXY(0, 23);
     PrintLine(0, 23, 80, '-');
-    MoveToXY(2, 24);
+
+    // Footer text
+    MoveToXY(1, 24);
     SetColor(COLOR_INFO);
     cout << message;
-    MoveToXY(0, 25);
     ResetColor();
+
+    // Move cursor out of footer
+    MoveToXY(0, 25);
 }
 
 void ConsoleView::PrintShortcutFooter(string shortcuts, string status) {
+    // Separator
     MoveToXY(0, 23);
     PrintLine(0, 23, 80, '-');
-    MoveToXY(2, 24);
+
+    // Left part: shortcuts
+    MoveToXY(1, 24);
     SetColor(COLOR_WARNING);
     cout << shortcuts;
-    MoveToXY(50, 24);
+
+    // Right part: status (right-aligned)
+    int statusX = 80 - static_cast<int>(status.length()) - 1;
+    if (statusX < static_cast<int>(shortcuts.length()) + 2) {
+        statusX = static_cast<int>(shortcuts.length()) + 2;
+    }
+    MoveToXY(statusX, 24);
     SetColor(COLOR_INFO);
     cout << status;
+
     ResetColor();
     MoveToXY(0, 25);
 }
 
-// ===== MESSAGE IMPLEMENTATIONS =====
+//MESSAGE IMPLEMENTATIONS
 
 void ConsoleView::ShowSuccess(string message) {
     SetColor(COLOR_SUCCESS);
-    cout << "[✓] " << message << endl;
+    cout << "[OK] " << message << endl;
     ResetColor();
 }
 
 void ConsoleView::ShowError(string message) {
     SetColor(COLOR_ERROR);
-    cout << "[✗] " << message << endl;
+    cout << "[ERR] " << message << endl;
     ResetColor();
 }
 
 void ConsoleView::ShowWarning(string message) {
     SetColor(COLOR_WARNING);
-    cout << "[!] " << message << endl;
+    cout << "[WARN] " << message << endl;
     ResetColor();
 }
 
 void ConsoleView::ShowInfo(string message) {
     SetColor(COLOR_INFO);
-    cout << message << endl;
+    cout << "[INFO] " << message << endl;
     ResetColor();
 }
 
-// ===== TABLE IMPLEMENTATIONS =====
+//TABLE IMPLEMENTATIONS
 
 void ConsoleView::PrintTableHeader(string columns[], int colWidths[], int numCols) {
-    PrintLine(0, 0, colWidths[0] + colWidths[1] + colWidths[2] + 5, '═');
-    
-    cout << "│";
+    cout << "+";
     for (int i = 0; i < numCols; i++) {
-        cout << " " << left << setw(colWidths[i]) << columns[i] << " │";
+        for (int j = 0; j < colWidths[i]; j++) cout << "-";
+        cout << "+";
     }
     cout << endl;
+
+    cout << "|";
+    for (int i = 0; i < numCols; i++) {
+        cout << " " << left << setw(colWidths[i] - 1) << columns[i] << "|";
+    }
+    cout << endl;
+
     PrintTableSeparator();
 }
 
-void ConsoleView::PrintTableRow(string col1, string col2, string col3) {
-    cout << "│ " << left << setw(18) << col1 
-         << " │ " << right << setw(12) << col2 
-         << " │ " << right << setw(14) << col3 << " │" << endl;
+void ConsoleView::PrintTableRow(const string col1,const string col2,const string col3) {
+    // colWidths[] = {20, 14, 16}
+    cout << "| " << left  << setw(18) << col1;  // Column 1: total 20 → " " + 18
+    cout << "| " << right << setw(13) << col2;  // Column 2: total 14 → " " + 13
+    cout << "| " << right << setw(15) << col3 << "|" << endl;  // Column 3: total 16 → " " + 15
 }
 
-/// Prints separator between table rows
 void ConsoleView::PrintTableSeparator() {
-    cout << "├" << string(20, '─') << "┼" 
-         << string(14, '─') << "┼" << string(16, '─') << "┤" << endl;
+    // 20 + 14 + 16 + 4 ('+' at 4 places) = 54
+    cout << "+--------------------+--------------+----------------+" << endl;
 }
 
 string ConsoleView::FormatCurrency(long amount) {
@@ -132,8 +174,8 @@ string ConsoleView::FormatCurrency(long amount) {
     string numStr = to_string(amount);
     string result;
     int count = 0;
-    
-    for (int i = numStr.length() - 1; i >= 0; i--) {
+
+    for (int i = static_cast<int>(numStr.length()) - 1; i >= 0; --i) {
         result = numStr[i] + result;
         count++;
         if (count % 3 == 0 && i > 0) {
