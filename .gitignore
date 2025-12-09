@@ -68,4 +68,5 @@ x86/
 .idea/
 cmake-build-*/
 CMakeCache.txt
-CMakeFiles/
+CMakeFiles/ 
+**/Makefile
