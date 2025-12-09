@@ -35,7 +35,7 @@ int main() {
     view.PrintHeader("TABLE TEST");
 
     std::string headers[] = {"Wallet", "Balance", "Transactions"};
-    int widths[] = {20, 14, 16};
+    int widths[] = {25, 25, 15};
     int numCols = 3;
 
     view.PrintTableHeader(headers, widths, numCols);

@@ -63,7 +63,7 @@ void ConsoleView::PrintHeader(string title) {
     PrintLine(0, 0, 80, '=');
 
     // Title centered on line 1
-    int startX = (80 - static_cast<int>(title.length())) / 2;
+    int startX = (80 - (int)(title.length())) / 2;
     if (startX < 0) startX = 0;
     MoveToXY(startX, 1);
     cout << title;
@@ -99,9 +99,9 @@ void ConsoleView::PrintShortcutFooter(string shortcuts, string status) {
     cout << shortcuts;
 
     // Right part: status (right-aligned)
-    int statusX = 80 - static_cast<int>(status.length()) - 1;
-    if (statusX < static_cast<int>(shortcuts.length()) + 2) {
-        statusX = static_cast<int>(shortcuts.length()) + 2;
+    int statusX = 80 - (int)(status.length()) - 1;
+    if (statusX < (int)(shortcuts.length()) + 2) {
+        statusX = (int)(shortcuts.length()) + 2;
     }
     MoveToXY(statusX, 24);
     SetColor(COLOR_INFO);
@@ -156,16 +156,16 @@ void ConsoleView::PrintTableHeader(string columns[], int colWidths[], int numCol
     PrintTableSeparator();
 }
 
-void ConsoleView::PrintTableRow(const string col1,const string col2,const string col3) {
-    // colWidths[] = {20, 14, 16}
-    cout << "| " << left  << setw(18) << col1;  // Column 1: total 20 → " " + 18
-    cout << "| " << right << setw(13) << col2;  // Column 2: total 14 → " " + 13
-    cout << "| " << right << setw(15) << col3 << "|" << endl;  // Column 3: total 16 → " " + 15
+void ConsoleView::PrintTableRow(const string col1, const string col2, const string col3) {
+    // colWidths[] = {25, 25, 15}
+    cout << "|" << left  << setw(25) << col1;  // Column 1: exactly 25
+    cout << "|" << right << setw(25) << col2;  // Column 2: exactly 25
+    cout << "|" << right << setw(15) << col3 << "|" << endl;  // Column 3: exactly 15
 }
 
 void ConsoleView::PrintTableSeparator() {
-    // 20 + 14 + 16 + 4 ('+' at 4 places) = 54
-    cout << "+--------------------+--------------+----------------+" << endl;
+    // 25 + 25 + 15 + 4 ('+' at 4 places) = 79
+    cout << "+-------------------------+-------------------------+---------------+" << endl;
 }
 
 string ConsoleView::FormatCurrency(long amount) {
@@ -175,7 +175,7 @@ string ConsoleView::FormatCurrency(long amount) {
     string result;
     int count = 0;
 
-    for (int i = static_cast<int>(numStr.length()) - 1; i >= 0; --i) {
+    for (int i = (int)(numStr.length()) - 1; i >= 0; --i) {
         result = numStr[i] + result;
         count++;
         if (count % 3 == 0 && i > 0) {

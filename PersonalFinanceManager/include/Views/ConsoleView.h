@@ -93,7 +93,7 @@ public:
     /// @param col1 First column data (left-aligned, padded to column width)
     /// @param col2 Second column data (right-aligned if numeric)
     /// @param col3 Third column data (currency format if applicable)
-    void PrintTableRow(string col1, string col2, string col3);
+    void PrintTableRow(const string col1,const  string col2,const  string col3);
 
     /// @brief Prints horizontal separator line between table rows
     void PrintTableSeparator();
