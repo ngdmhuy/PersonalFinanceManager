@@ -1,6 +1,6 @@
 #include <conio.h> //for _getch()
 #include "Views/ConsoleView.h"
-
+#include "Views/DashBoard.h"
 int main() {
     ConsoleView view;
 
@@ -44,6 +44,11 @@ int main() {
     view.PrintTableSeparator();
 
     view.PrintShortcutFooter("[ESC] Exit", "ConsoleView READY");
+    _getch();
+
+    //TEST 4: DASHBOARD VIEW
+    Dashboard dash;
+    dash.Display();
     _getch();
 
     return 0;
