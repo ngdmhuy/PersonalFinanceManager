@@ -27,7 +27,9 @@ static bool IsStringEmptyOrWhitespace(const std::string& str) {
     return str.find_first_not_of(' ') == std::string::npos;
 }
 
+// ==========================================
 // 1. CONSTRUCTOR & DESTRUCTOR
+// ==========================================
 
 AppController::AppController() {
     // 1. Initialize the Storage Lists (The "Tables")
@@ -95,14 +97,14 @@ AppController::~AppController() {
     std::cout << "[System] Memory cleaned up successfully.\n";
 }
 
+// ==========================================
 // 2. DATA PERSISTENCE
+// ==========================================
 
 void AppController::LoadData() {
     // Order: Categories -> Wallets -> Transactions
     
-    // ---------------------------------------------------------
     // 1. Load CATEGORIES
-    // ---------------------------------------------------------
     std::ifstream fCat(FILE_CATEGORIES, std::ios::binary);
     if (fCat.is_open()) {
         size_t count = BinaryFileHelper::ReadSizeT(fCat);
@@ -114,9 +116,7 @@ void AppController::LoadData() {
         fCat.close();
     }
     
-    // ---------------------------------------------------------
     // 2. Load INCOME SOURCES
-    // ---------------------------------------------------------
     std::ifstream fSrc(FILE_SOURCES, std::ios::binary);
     if (fSrc.is_open()) {
         size_t count = BinaryFileHelper::ReadSizeT(fSrc);
@@ -128,9 +128,7 @@ void AppController::LoadData() {
         fSrc.close();
     }
     
-    // ---------------------------------------------------------
     // 3. Load WALLETS
-    // ---------------------------------------------------------
     std::ifstream fWal(FILE_WALLETS, std::ios::binary);
     if (fWal.is_open()) {
         size_t count = BinaryFileHelper::ReadSizeT(fWal);
@@ -142,9 +140,7 @@ void AppController::LoadData() {
         fWal.close();
     }
     
-    // ---------------------------------------------------------
     // 4. Load TRANSACTIONS
-    // ---------------------------------------------------------
     std::ifstream fTrx(FILE_TRANSACTIONS, std::ios::binary);
     if (fTrx.is_open()) {
         size_t count = BinaryFileHelper::ReadSizeT(fTrx);
@@ -156,9 +152,7 @@ void AppController::LoadData() {
         fTrx.close();
     }
     
-    // ---------------------------------------------------------
     // 5. Load RECURRING TRANSACTIONS
-    // ---------------------------------------------------------
     std::ifstream fRec(FILE_RECURRING, std::ios::binary);
     if (fRec.is_open()) {
         size_t count = BinaryFileHelper::ReadSizeT(fRec);
@@ -174,11 +168,7 @@ void AppController::LoadData() {
 }
 
 void AppController::SaveData() {
-    // Order: Categories -> Wallets -> Transactions
-    
-    // ---------------------------------------------------------
     // 1. Save CATEGORIES
-    // ---------------------------------------------------------
     std::ofstream fCat(FILE_CATEGORIES, std::ios::binary);
     if (fCat.is_open()) {
         size_t count = categoriesList->Count();
@@ -188,9 +178,7 @@ void AppController::SaveData() {
         fCat.close();
     }
     
-    // ---------------------------------------------------------
     // 2. Save INCOME SOURCES
-    // ---------------------------------------------------------
     std::ofstream fSrc(FILE_SOURCES, std::ios::binary);
     if (fSrc.is_open()) {
         size_t count = incomeSourcesList->Count();
@@ -200,9 +188,7 @@ void AppController::SaveData() {
         fSrc.close();
     }
     
-    // ---------------------------------------------------------
     // 3. Save WALLETS
-    // ---------------------------------------------------------
     std::ofstream fWal(FILE_WALLETS, std::ios::binary);
     if (fWal.is_open()) {
         size_t count = walletsList->Count();
@@ -212,9 +198,7 @@ void AppController::SaveData() {
         fWal.close();
     }
     
-    // ---------------------------------------------------------
     // 4. Save TRANSACTIONS
-    // ---------------------------------------------------------
     std::ofstream fTrx(FILE_TRANSACTIONS, std::ios::binary);
     if (fTrx.is_open()) {
         size_t count = transactions->Count();
@@ -224,9 +208,7 @@ void AppController::SaveData() {
         fTrx.close();
     }
     
-    // ---------------------------------------------------------
     // 5. Save RECURRING TRANSACTIONS
-    // ---------------------------------------------------------
     std::ofstream fRec(FILE_RECURRING, std::ios::binary);
     if (fRec.is_open()) {
         size_t count = recurringTransactions->Count();
@@ -239,16 +221,16 @@ void AppController::SaveData() {
     std::cout << "[System] Data saved to disk.\n";
 }
 
-// 3. WALLET LOGIC
+// ==========================================
+// 3. WALLET LOGIC (BASIC)
+// ==========================================
 
 void AppController::AddWallet(const std::string& name, double initialBalance) {
-    // Validation
     if (IsStringEmptyOrWhitespace(name)) {
         std::cout << "[Error] Wallet creation failed: Name cannot be empty.\n";
         return;
     }
     
-    // Check for duplicate names (Business Rule)
     for (size_t i = 0; i < walletsList->Count(); ++i) {
         if (walletsList->Get(i)->GetName() == name) {
             std::cout << "[Warning] Wallet '" << name << "' already exists.\n";
@@ -256,17 +238,14 @@ void AppController::AddWallet(const std::string& name, double initialBalance) {
         }
     }
 
-    // ID Generation
     std::string prefix = EnumHelper::IdPrefixToString(IdPrefix::Wallet);
     std::string newId;
     do {
         newId = IdGenerator::GenerateId(prefix);
     } while (walletsMap->ContainsKey(newId));
 
-    // Create Object
     Wallet* newWallet = new Wallet(newId, name, initialBalance);
 
-    // Store in both List (for iteration) and Map (for lookup)
     walletsMap->Put(newId, newWallet);
     walletsList->Add(newWallet);
     
@@ -286,7 +265,9 @@ double AppController::GetTotalBalance() const {
     return total;
 }
 
-// 4. MASTER DATA (CATEGORIES & SOURCES)
+// ==========================================
+// 4. MASTER DATA LOGIC (BASIC)
+// ==========================================
 
 void AppController::AddCategory(const std::string& name) {
     if (IsStringEmptyOrWhitespace(name)) {
@@ -332,23 +313,22 @@ IncomeSource* AppController::GetIncomeSourceById(const std::string& id) {
     return (s != nullptr) ? *s : nullptr;
 }
 
+// ==========================================
 // 5. TRANSACTION CORE LOGIC
+// ==========================================
 
 void AppController::AddTransaction(double amount, std::string walletId, std::string categoryOrSourceId, TransactionType type, Date date, std::string description) {
-    // 1. Validate Amount
     if (amount <= 0) {
         std::cout << "[Error] Transaction amount must be positive.\n";
         return;
     }
 
-    // 2. Validate Wallet
     Wallet* wallet = GetWalletById(walletId);
     if (wallet == nullptr) {
         std::cout << "[Error] Wallet ID not found: " << walletId << "\n";
         return;
     }
 
-    // 3. Validate Category or Source
     if (type == TransactionType::Expense) {
         if (GetCategoryById(categoryOrSourceId) == nullptr) {
              std::cout << "[Error] Expense Category not found.\n";
@@ -361,7 +341,6 @@ void AppController::AddTransaction(double amount, std::string walletId, std::str
         }
     }
 
-    // 4. Create Transaction
     std::string prefix = EnumHelper::IdPrefixToString(IdPrefix::Transaction);
     std::string transId;
     do {
@@ -372,10 +351,10 @@ void AppController::AddTransaction(double amount, std::string walletId, std::str
 
     if (type == TransactionType::Income) {
         newTrans = new Income(transId, walletId, categoryOrSourceId, amount, date, description);
-        wallet->AddAmount(amount); // Automatically increase balance
+        wallet->AddAmount(amount);
     } else {
         newTrans = new Expense(transId, walletId, categoryOrSourceId, amount, date, description);
-        wallet->SubtractAmount(amount); // Automatically decrease balance
+        wallet->SubtractAmount(amount);
     }
 
     transactions->Add(newTrans);
@@ -389,7 +368,6 @@ bool AppController::DeleteTransaction(const std::string& transactionId) {
     int foundIndex = -1;
     Transaction* target = nullptr;
 
-    // 1. Search for the transaction
     for (size_t i = 0; i < transactions->Count(); ++i) {
         if (transactions->Get(i)->GetId() == transactionId) {
             foundIndex = (int)i;
@@ -403,13 +381,12 @@ bool AppController::DeleteTransaction(const std::string& transactionId) {
         return false;
     }
 
-    // 2. Restore the Wallet Balance (Undo logic)
     Wallet* w = GetWalletById(target->GetWalletId());
     if (w != nullptr) {
         if (target->GetType() == TransactionType::Income) {
-            w->SubtractAmount(target->GetAmount()); // Undo Income -> Subtract
+            w->SubtractAmount(target->GetAmount());
         } else {
-            w->AddAmount(target->GetAmount());      // Undo Expense -> Add
+            w->AddAmount(target->GetAmount());
         }
         std::cout << "[Info] Wallet balance restored. New Balance: "
                   << std::fixed << std::setprecision(0) << w->GetBalance() << "\n";
@@ -417,17 +394,17 @@ bool AppController::DeleteTransaction(const std::string& transactionId) {
         std::cout << "[Warning] Linked Wallet not found. Balance not restored.\n";
     }
 
-    // 3. Remove and Delete
     transactions->RemoveAt(foundIndex);
     transactionsMap->Remove(transactionId);
-    delete target; // Important: Free memory to avoid leaks
+    delete target;
     return true;
 }
 
+// ==========================================
 // 6. AUTOMATION & REPORTING
+// ==========================================
 
 void AppController::AddRecurringTransaction(Frequency freq, Date startDate, Date endDate, std::string walletId, std::string categoryId, double amount, TransactionType type, std::string desc) {
-    // Validation
     if (endDate.IsValid() && startDate > endDate) {
         std::cout << "[Error] Invalid Date Range: Start > End.\n";
         return;
@@ -449,7 +426,6 @@ void AppController::AddRecurringTransaction(Frequency freq, Date startDate, Date
         id = IdGenerator::GenerateId(prefix);
     } while (recurringTransactionsMap->ContainsKey(id));
     
-    // Create and Store
     RecurringTransaction* rt = new RecurringTransaction(id, freq, startDate, endDate, walletId, categoryId, amount, type, desc);
     recurringTransactions->Add(rt);
     std::cout << "[Success] Recurring transaction scheduled.\n";
@@ -464,30 +440,25 @@ void AppController::ProcessRecurringTransactions() {
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         RecurringTransaction* rt = recurringTransactions->Get(i);
 
-        // Ask the recurring object if it's time to run
         if (rt->ShouldGenerate(today)) {
             Wallet* w = GetWalletById(rt->GetWalletId());
             if (w == nullptr) continue;
 
-            // Generate a real transaction ID
             std::string prefix = EnumHelper::IdPrefixToString(IdPrefix::Transaction);
             std::string newTransId;
             do {
                 newTransId = IdGenerator::GenerateId(prefix);
             } while (transactionsMap->ContainsKey(newTransId));
             
-            // Create the real transaction
             Transaction* autoTrans = rt->GenerateTransaction(newTransId, today);
             transactions->Add(autoTrans);
             
-            // Update wallet balance immediately
             if (rt->GetType() == TransactionType::Income) {
                 w->AddAmount(rt->GetAmount());
             } else {
                 w->SubtractAmount(rt->GetAmount());
             }
 
-            // Mark as done for this period
             rt->SetLastGeneratedDate(today);
             generatedCount++;
             std::cout << "[Auto] Generated: " << rt->GetDescription() << " (" << rt->GetAmount() << ")\n";
@@ -504,8 +475,239 @@ ArrayList<Transaction*>* AppController::GetTransactionsByDateRange(Date start, D
 
     for (size_t i = 0; i < transactions->Count(); ++i) {
         Transaction* t = transactions->Get(i);
-        // Simple date range filter
         if (t->GetDate() >= start && t->GetDate() <= end) {
+            result->Add(t);
+        }
+    }
+    return result;
+}
+
+// =================================================================================
+// PART 7: ADVANCED CRUD (EDIT & SECURE DELETE)
+// =================================================================================
+
+// ---------------------------------------------------------
+// 7.1. WALLET MANAGEMENT (ADVANCED)
+// ---------------------------------------------------------
+
+void AppController::EditWallet(const std::string& id, const std::string& newName) {
+    Wallet* w = GetWalletById(id);
+    if (w == nullptr) {
+        std::cout << "[Error] Wallet ID not found: " << id << "\n";
+        return;
+    }
+
+    if (IsStringEmptyOrWhitespace(newName)) {
+         std::cout << "[Error] Update failed: New name cannot be empty.\n";
+         return;
+    }
+
+    w->SetName(newName); 
+    std::cout << "[Success] Wallet updated to: " << newName << "\n";
+}
+
+bool AppController::DeleteWallet(const std::string& id) {
+    Wallet* w = GetWalletById(id);
+    if (w == nullptr) {
+        std::cout << "[Error] Wallet ID not found.\n";
+        return false;
+    }
+
+    // Dependency Check: Transactions
+    for (size_t i = 0; i < transactions->Count(); ++i) {
+        if (transactions->Get(i)->GetWalletId() == id) {
+            std::cout << "[Error] Cannot delete wallet. It contains existing transactions.\n";
+            return false;
+        }
+    }
+    
+    // Dependency Check: Recurring
+    for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
+        if (recurringTransactions->Get(i)->GetWalletId() == id) {
+             std::cout << "[Error] Cannot delete wallet. It is used in a Recurring Transaction setup.\n";
+             return false;
+        }
+    }
+
+    walletsMap->Remove(id);
+    
+    int indexToRemove = -1;
+    for (size_t i = 0; i < walletsList->Count(); ++i) {
+        if (walletsList->Get(i)->GetId() == id) {
+            indexToRemove = (int)i;
+            break;
+        }
+    }
+    if (indexToRemove != -1) walletsList->RemoveAt(indexToRemove);
+
+    delete w; 
+    std::cout << "[Success] Wallet deleted successfully.\n";
+    return true;
+}
+
+// ---------------------------------------------------------
+// 7.2. MASTER DATA (ADVANCED)
+// ---------------------------------------------------------
+
+bool AppController::DeleteCategory(const std::string& id) {
+    for (size_t i = 0; i < transactions->Count(); ++i) {
+        Transaction* t = transactions->Get(i);
+        if (t->GetType() == TransactionType::Expense) {
+            if (t->GetCategoryId() == id) {
+                std::cout << "[Error] Cannot delete Category. Used in Transaction ID: " << t->GetId() << "\n";
+                return false;
+            }
+        }
+    }
+    
+    for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
+        RecurringTransaction* rt = recurringTransactions->Get(i);
+        if (rt->GetType() == TransactionType::Expense && rt->GetCategoryId() == id) {
+             std::cout << "[Error] Cannot delete Category. Used in a Recurring Transaction.\n";
+             return false;
+        }
+    }
+
+    Category* c = GetCategoryById(id);
+    if (!c) {
+        std::cout << "[Error] Category ID not found.\n";
+        return false;
+    }
+
+    categoriesMap->Remove(id);
+    
+    int idx = -1;
+    for(size_t i=0; i<categoriesList->Count(); ++i) 
+        if(categoriesList->Get(i)->GetId() == id) idx = (int)i;
+    
+    if(idx != -1) categoriesList->RemoveAt(idx);
+    
+    delete c;
+    std::cout << "[Success] Category deleted successfully.\n";
+    return true;
+}
+
+bool AppController::DeleteIncomeSource(const std::string& id) {
+    for (size_t i = 0; i < transactions->Count(); ++i) {
+        Transaction* t = transactions->Get(i);
+        if (t->GetType() == TransactionType::Income) {
+            if (t->GetCategoryId() == id) {
+                std::cout << "[Error] Cannot delete Source. Used in Transaction ID: " << t->GetId() << "\n";
+                return false;
+            }
+        }
+    }
+    
+    for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
+        RecurringTransaction* rt = recurringTransactions->Get(i);
+        if (rt->GetType() == TransactionType::Income && rt->GetCategoryId() == id) {
+             std::cout << "[Error] Cannot delete Source. Used in a Recurring Transaction.\n";
+             return false;
+        }
+    }
+
+    IncomeSource* s = GetIncomeSourceById(id);
+    if (!s) return false;
+
+    incomeSourcesMap->Remove(id);
+    
+    int idx = -1;
+    for(size_t i=0; i<incomeSourcesList->Count(); ++i) 
+        if(incomeSourcesList->Get(i)->GetId() == id) idx = (int)i;
+    
+    if(idx != -1) incomeSourcesList->RemoveAt(idx);
+    
+    delete s;
+    std::cout << "[Success] Income Source deleted.\n";
+    return true;
+}
+
+// ---------------------------------------------------------
+// 7.3. TRANSACTION EDIT (ADVANCED)
+// ---------------------------------------------------------
+
+bool AppController::EditTransaction(const std::string& id, double newAmount, Date newDate, std::string newDesc) {
+    if (newAmount <= 0) {
+        std::cout << "[Error] Amount must be positive.\n";
+        return false;
+    }
+
+    Transaction** tPtr = transactionsMap->Get(id);
+    if (tPtr == nullptr) {
+        std::cout << "[Error] Transaction ID not found: " << id << "\n";
+        return false;
+    }
+    Transaction* target = *tPtr;
+
+    Wallet* w = GetWalletById(target->GetWalletId());
+    if (w == nullptr) {
+        std::cout << "[Critical Error] Wallet linked to this transaction not found!\n";
+        return false;
+    }
+
+    // RE-CALCULATE BALANCE
+    // 1. Undo Old
+    if (target->GetType() == TransactionType::Income) {
+        w->SubtractAmount(target->GetAmount()); 
+    } else {
+        w->AddAmount(target->GetAmount());      
+    }
+
+    // 2. Apply New
+    if (target->GetType() == TransactionType::Income) {
+        w->AddAmount(newAmount); 
+    } else {
+        w->SubtractAmount(newAmount); 
+    }
+
+    target->SetAmount(newAmount);
+    target->SetDate(newDate);
+    target->SetDescription(newDesc);
+
+    std::cout << "[Success] Transaction updated. Wallet balance adjusted.\n";
+    return true;
+}
+
+// =================================================================================
+// PART 8: STATISTICS & FILTERING ENGINE
+// =================================================================================
+
+ArrayList<Transaction*>* AppController::GetTransactionsByWallet(const std::string& walletId) {
+    ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
+    
+    if (GetWalletById(walletId) == nullptr) {
+        std::cout << "[Warning] Filter failed: Wallet ID not found.\n";
+        return result;
+    }
+
+    for (size_t i = 0; i < transactions->Count(); ++i) {
+        Transaction* t = transactions->Get(i);
+        if (t->GetWalletId() == walletId) {
+            result->Add(t);
+        }
+    }
+    return result;
+}
+
+ArrayList<Transaction*>* AppController::GetTransactionsByCategory(const std::string& categoryId) {
+    ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
+
+    for (size_t i = 0; i < transactions->Count(); ++i) {
+        Transaction* t = transactions->Get(i);
+        // Only Expenses have Categories
+        if (t->GetType() == TransactionType::Expense && t->GetCategoryId() == categoryId) {
+            result->Add(t);
+        }
+    }
+    return result;
+}
+
+ArrayList<Transaction*>* AppController::SearchTransactions(const std::string& keyword) {
+    ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
+    
+    for (size_t i = 0; i < transactions->Count(); ++i) {
+        Transaction* t = transactions->Get(i);
+        if (t->GetDescription().find(keyword) != std::string::npos) {
             result->Add(t);
         }
     }

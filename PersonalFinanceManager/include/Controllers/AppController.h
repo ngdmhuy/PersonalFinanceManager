@@ -63,92 +63,58 @@ private:
 public:
 
     // 1. CONSTRUCTOR & DESTRUCTOR
-
     AppController();
     ~AppController();
 
- 
     // 2. DATA PERSISTENCE
-
-    /**
-     * @brief Loads all data from binary files into memory.
-     * Order: Categories/Sources -> Wallets -> Transactions.
-     */
     void LoadData();
-
-    /**
-     * @brief Saves all current memory data to binary files.
-     */
     void SaveData();
 
-
     // 3. WALLET LOGIC
-
-    /**
-     * @brief Creates a new wallet and adds it to both List and Map.
-     * @param name Display name of the wallet.
-     * @param initialBalance Starting amount.
-     */
-        void AddWallet(const std::string& name, double initialBalance);
-
-    /**
-     * @brief Finds a wallet by its unique ID.
-     * @return Pointer to Wallet or nullptr if not found.
-     */
+    void AddWallet(const std::string& name, double initialBalance);
     Wallet* GetWalletById(const std::string& id);
-
-    /**
-     * @brief Gets the list of all wallets (for display).
-     */
     ArrayList<Wallet*>* GetWalletsList() const { return walletsList; }
-
-    /**
-     * @brief Calculates the sum of balances across all wallets.
-     */
     double GetTotalBalance() const;
+    
+    // --- [NEW] WALLET CRUD ---
+    void EditWallet(const std::string& id, const std::string& newName);
+    bool DeleteWallet(const std::string& id);
 
-     // 4. MASTER DATA (CATEGORIES & SOURCES)
-
+    // 4. MASTER DATA (CATEGORIES & SOURCES)
     void AddCategory(const std::string& name);
     Category* GetCategoryById(const std::string& id);
     ArrayList<Category*>* GetCategoriesList() const { return categoriesList; }
+    
+    // --- [NEW] CATEGORY CRUD ---
+    bool DeleteCategory(const std::string& id);
 
     void AddIncomeSource(const std::string& name);
     IncomeSource* GetIncomeSourceById(const std::string& id);
     ArrayList<IncomeSource*>* GetIncomeSourcesList() const { return incomeSourcesList; }
+    
+    // --- [NEW] INCOME SOURCE CRUD ---
+    bool DeleteIncomeSource(const std::string& id);
 
     // 5. TRANSACTION CORE LOGIC
-
-    /**
-     * @brief Creates a transaction and automatically updates the Wallet balance.
-     * @param amount The value of the transaction (must be > 0).
-     * @param walletId The ID of the wallet to charge/refund.
-     * @param categoryOrSourceId Category ID (if Expense) or Source ID (if Income).
-     * @param type Income or Expense.
-     * @param date Date of transaction.
-     * @param description Short text description.
-     */
     void AddTransaction(double amount, std::string walletId, std::string categoryOrSourceId, TransactionType type, Date date, std::string description);
-    
-    /**
-     * @brief Deletes a transaction and reverses the balance change on the Wallet.
-     * @return true if successful, false if ID not found.
-     */
     bool DeleteTransaction(const std::string& transactionId);
+    
+    // --- [NEW] TRANSACTION EDIT ---
+    bool EditTransaction(const std::string& id, double newAmount, Date newDate, std::string newDesc);
 
     ArrayList<Transaction*>* GetTransactions() const { return transactions; }
     
     // 6. AUTOMATION & REPORTING
-    /**
-     * @brief Schedules a recurring transaction to happen automatically in the future.
-     */
     void AddRecurringTransaction(Frequency freq, Date startDate, Date endDate, std::string walletId, std::string categoryId, double amount, TransactionType type, std::string desc);
 
-    /**
-     * @brief Filters transactions within a specific date range.
-     * Useful for generating reports or charts.
-     */
+    // --- FILTERS & STATISTICS ---
     ArrayList<Transaction*>* GetTransactionsByDateRange(Date start, Date end);
-};
+    
+    // --- [NEW] ADVANCED FILTERS (For Statistics Engine) ---
+    ArrayList<Transaction*>* GetTransactionsByWallet(const std::string& walletId);
+    ArrayList<Transaction*>* GetTransactionsByCategory(const std::string& categoryId);
+    ArrayList<Transaction*>* SearchTransactions(const std::string& keyword);
+
+}; 
 
 #endif // !AppController_h
