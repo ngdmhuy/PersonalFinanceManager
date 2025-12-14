@@ -1,55 +1,28 @@
-#include <conio.h> //for _getch()
-#include "Views/ConsoleView.h"
-#include "Views/DashBoard.h"
+#include <iostream>
+#include "Controllers/AppController.h"
+#include "Controllers/NavigationController.h"
+
 int main() {
-    ConsoleView view;
+    try {
+        // Initialize app controller (handles data persistence and business logic)
+        AppController appController;
 
-    //TEST 1: MESSAGES & BASIC CONTROL
-    view.ClearScreen();
-    view.PrintHeader("CONSOLEVIEW TEST");
+        // Initialize navigation controller (handles UI and user flow)
+        NavigationController navController(&appController);
 
-    view.ShowSuccess("MoveToXY, SetColor, ClearScreen OK");
-    view.ShowError("Error message test");
-    view.ShowWarning("Warning message test");
-    view.ShowInfo("Info message test");
+        // Load data from binary files
+        navController.Init();
 
-    view.PrintFooter("Test 1 Complete - Press any key to continue...");
-    _getch(); 
+        // Start the main application loop
+        navController.Run();
 
-    //TEST 2: BOX DRAWING
-    view.ClearScreen();
-    view.PrintHeader("BOX TEST");
+        // Save data and cleanup
+        navController.Shutdown();
 
-    view.PrintBox(10, 5, 30, 8);
-    view.MoveToXY(15, 8);
-    view.SetColor(10);
-    std::cout << "BOX TEST OK";
-    view.ResetColor();
-
-    view.PrintLine(0, 18, 80, '=');
-    view.PrintFooter("Test 2 Complete - Press any key to continue...");
-    _getch();
-
-    //TEST 3: TABLE
-    view.ClearScreen();
-    view.PrintHeader("TABLE TEST");
-
-    std::string headers[] = {"Wallet", "Balance", "Transactions"};
-    int widths[] = {25, 25, 15};
-    int numCols = 3;
-
-    view.PrintTableHeader(headers, widths, numCols);
-    view.PrintTableRow("Cash", view.FormatCurrency(5000000),  "12");
-    view.PrintTableRow("Bank", view.FormatCurrency(45000000), "3");
-    view.PrintTableSeparator();
-
-    view.PrintShortcutFooter("[ESC] Exit", "ConsoleView READY");
-    _getch();
-
-    //TEST 4: DASHBOARD VIEW
-    Dashboard dash;
-    dash.Display();
-    _getch();
-
-    return 0;
+        return 0;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Fatal error: " << e.what() << std::endl;
+        return 1;
+    }
 }
