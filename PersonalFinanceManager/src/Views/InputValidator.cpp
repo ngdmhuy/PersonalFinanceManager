@@ -1,5 +1,5 @@
-#include "Views/InputValidator.h"
-#include "Views/ConsoleView.h"
+#include "../../include/Views/InputValidator.h"
+#include "../../include/Views/ConsoleView.h"
 #include <iostream>
 
 using namespace std;

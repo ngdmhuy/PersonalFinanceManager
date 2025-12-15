@@ -1,4 +1,4 @@
-#include "Views/ConsoleView.h"
+#include "../../include/Views/ConsoleView.h"
 #include <iomanip>
 #include <sstream>
 

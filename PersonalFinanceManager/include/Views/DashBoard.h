@@ -1,7 +1,7 @@
 #ifndef DASHBOARD_H
 #define DASHBOARD_H
 
-#include "ConsoleView.h"
+#include "../Views/ConsoleView.h"
 
 class Dashboard {
 private:

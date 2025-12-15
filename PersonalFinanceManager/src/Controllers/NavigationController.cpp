@@ -1,4 +1,4 @@
-#include "Controllers/NavigationController.h"
+#include "../../include/Controllers/NavigationController.h"
 #include <conio.h>
 #include <iostream>
 

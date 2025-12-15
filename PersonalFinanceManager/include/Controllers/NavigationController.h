@@ -7,10 +7,10 @@
 #include "Controllers/AppController.h"
 
 // Views
-#include "Views/DashBoard.h"
-#include "Views/Menus.h"
-#include "Views/ConsoleView.h"
-#include "Views/InputValidator.h"
+#include "../Views/DashBoard.h"
+#include "../Views/Menus.h"
+#include "../Views/ConsoleView.h"
+#include "../Views/InputValidator.h"
 
 class NavigationController {
 public:
@@ -41,6 +41,12 @@ private:
     void ShowWalletFlow();
     void ShowReportsFlow();
 
+    // Income handlers
+    void HandleAddIncome();
+    void HandleViewIncome();
+    void HandleEditIncome();
+    void HandleDeleteIncome();
+
     // Expense handlers
     void HandleAddExpense();
     void HandleViewExpenses();
@@ -58,11 +64,7 @@ private:
     void HandleIncomeVsExpense();
     void HandleWalletBalanceOverview();
 
-    // Income handlers
-    void HandleAddIncome();
-    void HandleViewIncome();
-    void HandleEditIncome();
-    void HandleDeleteIncome();
+   
 
     // Helper: show message and wait for key
     void PauseWithMessage(const std::string& msg);

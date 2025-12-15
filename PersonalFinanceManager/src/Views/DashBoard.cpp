@@ -1,5 +1,5 @@
-#include "Views/DashBoard.h"
-#include "Views/Menus.h"
+#include "../../include/Views/DashBoard.h"
+#include "../../include/Views/Menus.h"
 #include <conio.h> // for _getch()
 
 void Dashboard::Display() {
