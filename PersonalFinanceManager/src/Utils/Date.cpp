@@ -7,19 +7,27 @@
 
 #include "../../include/Utils/Date.h"
 
-// Constructors
+// ==========================================
+// 1. CONSTRUCTORS
+// ==========================================
+
 Date::Date(): day(0), month(0), year(0) { }
 Date::Date(int d, int m, int y) : day(d), month(m), year(y) { }
 
-// Destructors
 Date::~Date() = default;
 
-// Getters
-int Date::getDay() const { return day; }
-int Date::getMonth() const { return month; }
-int Date::getYear() const { return year; }
+// ==========================================
+// 2. GETTERS
+// ==========================================
 
-// Operators
+int Date::GetDay() const { return day; }
+int Date::GetMonth() const { return month; }
+int Date::GetYear() const { return year; }
+
+// ==========================================
+// 3. OPERATORS
+// ==========================================
+
 bool Date::operator<(const Date& other) const {
     if (year != other.year) return year < other.year;
     if (month != other.month) return month < other.month;
@@ -36,13 +44,15 @@ bool Date::operator<=(const Date& other) const { return !(*this > other); }
 bool Date::operator>=(const Date& other) const { return !(*this < other); }
 bool Date::operator!=(const Date& other) const { return !(*this == other); }
 
-// Others
+// ==========================================
+// 4. UTILITIES & STATIC HELPERS
+// ==========================================
 
-// Format: YYYY-MM-DD
 Date Date::FromString(const std::string& dateStr) {
     if (dateStr.empty()) return Date();
     int d, m, y;
     char dash;
+    // Expected format: YYYY-MM-DD
     std::stringstream ss(dateStr);
     ss >> y >> dash >> m >> dash >> d;
     return Date(d, m, y);
@@ -51,8 +61,8 @@ Date Date::FromString(const std::string& dateStr) {
 std::string Date::ToString() const {
     std::stringstream ss;
     ss << std::setw(4) << std::setfill('0') << year << "-"
-    << std::setw(2) << std::setfill('0') << month << "-"
-    << std::setw(2) << std::setfill('0') << day;
+       << std::setw(2) << std::setfill('0') << month << "-"
+       << std::setw(2) << std::setfill('0') << day;
     
     return ss.str();
 }
@@ -93,6 +103,7 @@ Date Date::GetTodayDate() {
     return today;
 }
 
+// Stream Operators
 std::istream& operator>>(std::istream& is, Date& d) {
     std::string dateStr;
     is >> dateStr;

@@ -10,6 +10,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 
 // Include Utils
 #include "../Utils/ArrayList.h"
@@ -17,6 +18,7 @@
 #include "../Utils/Date.h"
 #include "../Utils/IdGenerator.h"
 #include "../Utils/Enums.h"
+#include "../Utils/BinaryFileHelper.h"
 
 // Include Models
 #include "../Models/Transaction.h"
@@ -27,70 +29,92 @@
 #include "../Models/IncomeSource.h"
 #include "../Models/RecurringTransaction.h"
 
+/**
+ * @class AppController
+ * @brief The central brain of the application.
+ *
+ * Manages the lifecycle of Wallets, Transactions, and Master Data (Categories/Sources).
+ * Acts as the bridge between the UI (M3) and Data Persistence (M1).
+ */
 class AppController {
 private:
-    // --- 1. DATABASE (IN-MEMORY) ---
-    // Danh sách chính lưu dữ liệu
+    // --- Data Storage (The "Database") ---
     ArrayList<Transaction*>* transactions;
     ArrayList<RecurringTransaction*>* recurringTransactions;
 
-    // Map để tra cứu nhanh (ID -> Object) - Dùng cho Logic Check
+    // --- Fast Lookups (Indices) ---
     HashMap<std::string, Wallet*>* walletsMap;
     HashMap<std::string, Category*>* categoriesMap;
     HashMap<std::string, IncomeSource*>* incomeSourcesMap;
+    HashMap<std::string, Transaction*>* transactionsMap;
+    HashMap<std::string, RecurringTransaction*>* recurringTransactionsMap;
 
-    // List để duyệt tuần tự - Dùng cho hiển thị Menu & Báo cáo
+    // --- Iteration Lists (For UI Menus) ---
     ArrayList<Wallet*>* walletsList;
     ArrayList<Category*>* categoriesList;
     ArrayList<IncomeSource*>* incomeSourcesList;
 
-    // --- 2. INTERNAL HELPER ---
-    // Hàm này chạy ngầm để sinh giao dịch định kỳ
-    void processRecurringTransactions();
+    /**
+     * @brief Internal check to generate automatic transactions.
+     * Called automatically during initialization.
+     */
+    void ProcessRecurringTransactions();
 
 public:
-    // Constructor & Destructor
+
+    // 1. CONSTRUCTOR & DESTRUCTOR
     AppController();
     ~AppController();
 
-    // --- 3. DATA PERSISTENCE ---
-    void loadData();
-    void saveData();
+    // 2. DATA PERSISTENCE
+    void LoadData();
+    void SaveData();
 
-    // --- 4. WALLET LOGIC ---
-    void addWallet(const std::string& name, double initialBalance);
-    Wallet* getWalletById(const std::string& id);
-    ArrayList<Wallet*>* getWalletsList() const { return walletsList; }
-    double getTotalBalance() const;
-
-    // --- 5. MASTER DATA LOGIC ---
-    void addCategory(const std::string& name);
-    Category* getCategoryById(const std::string& id);
-    ArrayList<Category*>* getCategoriesList() const { return categoriesList; }
-
-    void addIncomeSource(const std::string& name);
-    IncomeSource* getIncomeSourceById(const std::string& id);
-    ArrayList<IncomeSource*>* getIncomeSourcesList() const { return incomeSourcesList; }
-
-    // --- 6. TRANSACTION LOGIC (CORE) ---
-    // Thêm giao dịch mới (Tự động trừ/cộng tiền ví)
-    void addTransaction(double amount, std::string walletId, std::string categoryOrSourceId, 
-                        TransactionType type, Date date, std::string description);
+    // 3. WALLET LOGIC
+    void AddWallet(const std::string& name, double initialBalance);
+    Wallet* GetWalletById(const std::string& id);
+    ArrayList<Wallet*>* GetWalletsList() const { return walletsList; }
+    double GetTotalBalance() const;
     
-    // Xóa giao dịch (Tự động hoàn tiền lại ví)
-    bool deleteTransaction(const std::string& transactionId);
+    // --- [NEW] WALLET CRUD ---
+    void EditWallet(const std::string& id, const std::string& newName);
+    bool DeleteWallet(const std::string& id);
 
-    // Lấy toàn bộ danh sách giao dịch
-    ArrayList<Transaction*>* getTransactions() const { return transactions; }
+    // 4. MASTER DATA (CATEGORIES & SOURCES)
+    void AddCategory(const std::string& name);
+    Category* GetCategoryById(const std::string& id);
+    ArrayList<Category*>* GetCategoriesList() const { return categoriesList; }
     
-    // --- 7. RECURRING LOGIC (AUTOMATION) ---
-    void addRecurringTransaction(Frequency freq, Date startDate, Date endDate,
-                                 std::string walletId, std::string categoryId,
-                                 double amount, TransactionType type, std::string desc);
+    // --- [NEW] CATEGORY CRUD ---
+    bool DeleteCategory(const std::string& id);
 
-    // --- 8. REPORTING HELPERS ---
-    // Lấy danh sách giao dịch trong khoảng thời gian (cho M3 vẽ biểu đồ)
-    ArrayList<Transaction*>* getTransactionsByDateRange(Date start, Date end);
-};
+    void AddIncomeSource(const std::string& name);
+    IncomeSource* GetIncomeSourceById(const std::string& id);
+    ArrayList<IncomeSource*>* GetIncomeSourcesList() const { return incomeSourcesList; }
+    
+    // --- [NEW] INCOME SOURCE CRUD ---
+    bool DeleteIncomeSource(const std::string& id);
 
-#endif /* AppController_h */
+    // 5. TRANSACTION CORE LOGIC
+    void AddTransaction(double amount, std::string walletId, std::string categoryOrSourceId, TransactionType type, Date date, std::string description);
+    bool DeleteTransaction(const std::string& transactionId);
+    
+    // --- [NEW] TRANSACTION EDIT ---
+    bool EditTransaction(const std::string& id, double newAmount, Date newDate, std::string newDesc);
+
+    ArrayList<Transaction*>* GetTransactions() const { return transactions; }
+    
+    // 6. AUTOMATION & REPORTING
+    void AddRecurringTransaction(Frequency freq, Date startDate, Date endDate, std::string walletId, std::string categoryId, double amount, TransactionType type, std::string desc);
+
+    // --- FILTERS & STATISTICS ---
+    ArrayList<Transaction*>* GetTransactionsByDateRange(Date start, Date end);
+    
+    // --- [NEW] ADVANCED FILTERS (For Statistics Engine) ---
+    ArrayList<Transaction*>* GetTransactionsByWallet(const std::string& walletId);
+    ArrayList<Transaction*>* GetTransactionsByCategory(const std::string& categoryId);
+    ArrayList<Transaction*>* SearchTransactions(const std::string& keyword);
+
+}; 
+
+#endif // !AppController_h
