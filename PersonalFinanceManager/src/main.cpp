@@ -1,6 +1,6 @@
 #include <iostream>
-#include "../../include/Controllers/AppController.h"
-#include "../../include/Controllers/NavigationController.h"
+#include "Controllers/AppController.h"
+#include "Controllers/NavigationController.h"
 
 int main() {
     try {

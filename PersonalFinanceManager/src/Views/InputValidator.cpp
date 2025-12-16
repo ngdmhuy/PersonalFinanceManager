@@ -61,7 +61,7 @@ bool InputValidator::ValidateMoney(double amount) {
 
 bool InputValidator::ValidateDate(const Date& date) {
     // Check if date is not default (0/0/0)
-    return !(date.getDay() == 0 && date.getMonth() == 0 && date.getYear() == 0);
+    return !(date.GetDay() == 0 && date.GetMonth() == 0 && date.GetYear() == 0);
 }
 
 bool InputValidator::ValidateString(const std::string& str) {
