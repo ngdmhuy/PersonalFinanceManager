@@ -157,7 +157,7 @@ void ConsoleView::PrintTableRow(const std::string data[], const int colWidths[],
     std::cout << "|";
     for (int i = 0; i < numCols; i++) {
         // Left-align all columns and pad to the specified width
-        std::cout << left << std::setw(colWidths[i]) << data[i] << "|";
+        std::cout << std::left << std::setw(colWidths[i]) << data[i] << "|";
     }
     std::cout << std::endl;
 }

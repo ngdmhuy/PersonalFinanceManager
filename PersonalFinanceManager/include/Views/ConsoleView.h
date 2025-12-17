@@ -92,7 +92,7 @@ public:
     /// @param data Array of column data strings
     /// @param colWidths Array of column widths in characters
     /// @param numCols Number of columns
-    void PrintTableRow(const string data[], const int colWidths[], int numCols);
+    void PrintTableRow(const std::string data[], const int colWidths[], int numCols);
 
 
     /// @brief Prints horizontal separator line between table rows

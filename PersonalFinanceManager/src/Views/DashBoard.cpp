@@ -20,8 +20,8 @@ void Dashboard::Display() {
     std::string headers[] = {"Wallet Name", "Balance", "Transactions"};
     int widths[] = {25, 25, 15};
     int numCols = 3;
-    string data1[] = {"A","250000","12"};
-    string data2[] = {"B","2120000000","3"};
+    std::string data1[] = {"A","250000","12"};
+    std::string data2[] = {"B","2120000000","3"};
     view.PrintTableHeader(headers, widths, numCols);
     view.PrintTableRow(data1, widths, numCols);
     view.PrintTableRow(data2, widths, numCols);
