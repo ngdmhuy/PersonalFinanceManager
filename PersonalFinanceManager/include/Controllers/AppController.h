@@ -9,25 +9,17 @@
 #define AppController_h
 
 #include <string>
-#include <iostream>
-#include <fstream>
 
-// Include Utils
 #include "../Utils/ArrayList.h"
 #include "../Utils/HashMap.h"
 #include "../Utils/Date.h"
-#include "../Utils/IdGenerator.h"
 #include "../Utils/Enums.h"
-#include "../Utils/BinaryFileHelper.h"
 
-// Include Models
-#include "../Models/Transaction.h"
-#include "../Models/Income.h"
-#include "../Models/Expense.h"
-#include "../Models/Wallet.h"
-#include "../Models/Category.h"
-#include "../Models/IncomeSource.h"
-#include "../Models/RecurringTransaction.h"
+class Transaction;
+class RecurringTransaction;
+class Wallet;
+class Category;
+class IncomeSource;
 
 /**
  * @class AppController
@@ -59,7 +51,6 @@ private:
      * Called automatically during initialization.
      */
     void ProcessRecurringTransactions();
-
 public:
 
     // 1. CONSTRUCTOR & DESTRUCTOR
@@ -67,8 +58,8 @@ public:
     ~AppController();
 
     // 2. DATA PERSISTENCE
-    void LoadData();
     void SaveData();
+    void LoadData();
 
     // 3. WALLET LOGIC
     void AddWallet(const std::string& name, double initialBalance);

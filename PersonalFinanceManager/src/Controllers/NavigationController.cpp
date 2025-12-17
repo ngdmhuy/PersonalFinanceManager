@@ -1,6 +1,16 @@
 #include "Controllers/NavigationController.h"
 #include "Controllers/AppController.h"
+
 #include "Utils/PlatformUtils.h"
+
+// Include Models
+#include "Models/Transaction.h"
+#include "Models/Income.h"
+#include "Models/Expense.h"
+#include "Models/Wallet.h"
+#include "Models/Category.h"
+#include "Models/IncomeSource.h"
+#include "Models/RecurringTransaction.h"
 
 #include <iostream>
 

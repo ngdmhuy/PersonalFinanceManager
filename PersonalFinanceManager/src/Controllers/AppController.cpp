@@ -6,8 +6,23 @@
 //  Implementation of Business Logic with strict Validation and Error Handling.
 //
 
-#include "../../include/Controllers/AppController.h"
+#include "Controllers/AppController.h"
+
+// Include Utils
+#include "Utils/IdGenerator.h"
+#include "Utils/BinaryFileHelper.h"
+
+// Include Models
+#include "Models/Transaction.h"
+#include "Models/Income.h"
+#include "Models/Expense.h"
+#include "Models/Wallet.h"
+#include "Models/Category.h"
+#include "Models/IncomeSource.h"
+#include "Models/RecurringTransaction.h"
+
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <algorithm>
 
@@ -25,6 +40,41 @@ const std::string FILE_RECURRING = "data/recurring.bin";
 // Checks if a string is null, empty, or whitespace only
 static bool IsStringEmptyOrWhitespace(const std::string& str) {
     return str.find_first_not_of(' ') == std::string::npos;
+}
+
+template <typename T>
+static void FreeList(ArrayList<T*>*& list) {
+    if (list) {
+        for (int i = 0; i < list->Count(); ++i) {
+            delete list->Get(i);
+        }
+        
+        delete list;
+        list = nullptr;
+    }
+}
+
+template <typename T>
+static void SaveTable(const std::string& filename, ArrayList<T*>* list) {
+    std::ofstream fout(filename, std::ios::binary);
+    if (fout.is_open()) {
+        BinaryFileHelper::WriteList(fout, list);
+        fout.close();
+    }
+}
+
+template <typename T>
+static void LoadTable(const std::string& filename, ArrayList<T*>* list, HashMap<std::string, T*>* map) {
+    std::ifstream fin(filename, std::ios::binary);
+    if (fin.is_open()) {
+        BinaryFileHelper::ReadList(fin, list);
+        fin.close();
+        
+        for (size_t i = 0; i < list->Count(); ++i) {
+            T* obj = list->Get(i);
+            map->Put(obj->GetId(), obj);
+        }
+    }
 }
 
 // ==========================================
@@ -54,44 +104,19 @@ AppController::AppController() {
 }
 
 AppController::~AppController() {
-    // 1. Save state before closing
+    // Save state before closing
     SaveData();
-
-    // 2. Clean up Transactions
-    if (transactions) {
-        // Delete the actual objects first
-        for (size_t i = 0; i < transactions->Count(); ++i) delete transactions->Get(i);
-        delete transactions; // Then delete the list container
-    }
-    // Only delete the Map container, not the contents (already deleted via list)
+    
+    FreeList(transactions);
+    FreeList(recurringTransactions);
+    FreeList(walletsList);
+    FreeList(categoriesList);
+    FreeList(incomeSourcesList);
+    
     if (transactionsMap) delete transactionsMap;
-
-    // 3. Clean up Recurring Transactions
-    if (recurringTransactions) {
-        for (size_t i = 0; i < recurringTransactions->Count(); ++i) delete recurringTransactions->Get(i);
-        delete recurringTransactions;
-    }
     if (recurringTransactionsMap) delete recurringTransactionsMap;
-
-    // 4. Clean up Wallets
-    if (walletsList) {
-        for (size_t i = 0; i < walletsList->Count(); ++i) delete walletsList->Get(i);
-        delete walletsList;
-    }
     if (walletsMap) delete walletsMap;
-
-    // 5. Clean up Categories
-    if (categoriesList) {
-        for (size_t i = 0; i < categoriesList->Count(); ++i) delete categoriesList->Get(i);
-        delete categoriesList;
-    }
     if (categoriesMap) delete categoriesMap;
-
-    // 6. Clean up Income Sources
-    if (incomeSourcesList) {
-        for (size_t i = 0; i < incomeSourcesList->Count(); ++i) delete incomeSourcesList->Get(i);
-        delete incomeSourcesList;
-    }
     if (incomeSourcesMap) delete incomeSourcesMap;
     
     std::cout << "[System] Memory cleaned up successfully.\n";
@@ -101,124 +126,25 @@ AppController::~AppController() {
 // 2. DATA PERSISTENCE
 // ==========================================
 
-void AppController::LoadData() {
-    // Order: Categories -> Wallets -> Transactions
-    
-    // 1. Load CATEGORIES
-    std::ifstream fCat(FILE_CATEGORIES, std::ios::binary);
-    if (fCat.is_open()) {
-        size_t count = BinaryFileHelper::ReadSizeT(fCat);
-        for (size_t i = 0; i < count; ++i) {
-            Category* c = Category::FromBinary(fCat);
-            categoriesList->Add(c);
-            categoriesMap->Put(c->GetId(), c);
-        }
-        fCat.close();
-    }
-    
-    // 2. Load INCOME SOURCES
-    std::ifstream fSrc(FILE_SOURCES, std::ios::binary);
-    if (fSrc.is_open()) {
-        size_t count = BinaryFileHelper::ReadSizeT(fSrc);
-        for (size_t i = 0; i < count; ++i) {
-            IncomeSource* s = IncomeSource::FromBinary(fSrc);
-            incomeSourcesList->Add(s);
-            incomeSourcesMap->Put(s->GetId(), s);
-        }
-        fSrc.close();
-    }
-    
-    // 3. Load WALLETS
-    std::ifstream fWal(FILE_WALLETS, std::ios::binary);
-    if (fWal.is_open()) {
-        size_t count = BinaryFileHelper::ReadSizeT(fWal);
-        for (size_t i = 0; i < count; ++i) {
-            Wallet* w = Wallet::FromBinary(fWal);
-            walletsList->Add(w);
-            walletsMap->Put(w->GetId(), w);
-        }
-        fWal.close();
-    }
-    
-    // 4. Load TRANSACTIONS
-    std::ifstream fTrx(FILE_TRANSACTIONS, std::ios::binary);
-    if (fTrx.is_open()) {
-        size_t count = BinaryFileHelper::ReadSizeT(fTrx);
-        for (size_t i = 0; i < count; ++i) {
-            Transaction* t = Transaction::FromBinary(fTrx);
-            transactions->Add(t);
-            transactionsMap->Put(t->GetId(), t);
-        }
-        fTrx.close();
-    }
-    
-    // 5. Load RECURRING TRANSACTIONS
-    std::ifstream fRec(FILE_RECURRING, std::ios::binary);
-    if (fRec.is_open()) {
-        size_t count = BinaryFileHelper::ReadSizeT(fRec);
-        for (size_t i = 0; i < count; ++i) {
-            RecurringTransaction* rt = RecurringTransaction::FromBinary(fRec);
-            recurringTransactions->Add(rt);
-            recurringTransactionsMap->Put(rt->GetId(), rt);
-        }
-        fRec.close();
-    }
-    
-    std::cout << "[System] Data loaded from disk.\n";
-}
-
 void AppController::SaveData() {
-    // 1. Save CATEGORIES
-    std::ofstream fCat(FILE_CATEGORIES, std::ios::binary);
-    if (fCat.is_open()) {
-        size_t count = categoriesList->Count();
-        BinaryFileHelper::WriteSizeT(fCat, count);
-        for (size_t i = 0; i < count; ++i)
-            categoriesList->Get(i)->ToBinary(fCat);
-        fCat.close();
-    }
-    
-    // 2. Save INCOME SOURCES
-    std::ofstream fSrc(FILE_SOURCES, std::ios::binary);
-    if (fSrc.is_open()) {
-        size_t count = incomeSourcesList->Count();
-        BinaryFileHelper::WriteSizeT(fSrc, count);
-        for (size_t i = 0; i < count; ++i)
-            incomeSourcesList->Get(i)->ToBinary(fSrc);
-        fSrc.close();
-    }
-    
-    // 3. Save WALLETS
-    std::ofstream fWal(FILE_WALLETS, std::ios::binary);
-    if (fWal.is_open()) {
-        size_t count = walletsList->Count();
-        BinaryFileHelper::WriteSizeT(fWal, count);
-        for (size_t i = 0; i < count; ++i)
-            walletsList->Get(i)->ToBinary(fWal);
-        fWal.close();
-    }
-    
-    // 4. Save TRANSACTIONS
-    std::ofstream fTrx(FILE_TRANSACTIONS, std::ios::binary);
-    if (fTrx.is_open()) {
-        size_t count = transactions->Count();
-        BinaryFileHelper::WriteSizeT(fTrx, count);
-        for (size_t i = 0; i < count; ++i)
-            transactions->Get(i)->ToBinary(fTrx);
-        fTrx.close();
-    }
-    
-    // 5. Save RECURRING TRANSACTIONS
-    std::ofstream fRec(FILE_RECURRING, std::ios::binary);
-    if (fRec.is_open()) {
-        size_t count = recurringTransactions->Count();
-        BinaryFileHelper::WriteSizeT(fRec, count);
-        for (size_t i = 0; i < count; ++i)
-            recurringTransactions->Get(i)->ToBinary(fRec);
-        fRec.close();
-    }
+    SaveTable(FILE_CATEGORIES, categoriesList);
+    SaveTable(FILE_SOURCES, incomeSourcesList);
+    SaveTable(FILE_WALLETS, walletsList);
+    SaveTable(FILE_TRANSACTIONS, transactions);
+    SaveTable(FILE_RECURRING, recurringTransactions);
     
     std::cout << "[System] Data saved to disk.\n";
+}
+
+void AppController::LoadData() {
+    // Order: Categories -> Wallets -> Transactions
+    LoadTable(FILE_CATEGORIES, categoriesList, categoriesMap);
+    LoadTable(FILE_SOURCES, incomeSourcesList, incomeSourcesMap);
+    LoadTable(FILE_WALLETS, walletsList, walletsMap);
+    LoadTable(FILE_TRANSACTIONS, transactions, transactionsMap);
+    LoadTable(FILE_RECURRING, recurringTransactions, recurringTransactionsMap);
+    
+    std::cout << "[System] Data loaded from disk.\n";
 }
 
 // ==========================================

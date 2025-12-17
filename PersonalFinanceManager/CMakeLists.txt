@@ -3,11 +3,11 @@ project(PersonalFinanceManager)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Include directories
 include_directories(include)
 
-# Gather all source files
 file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.h")
 
-# Create executable
-add_executable(PFM ${SOURCES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
+
+add_executable(PFM ${SOURCES} ${HEADERS})

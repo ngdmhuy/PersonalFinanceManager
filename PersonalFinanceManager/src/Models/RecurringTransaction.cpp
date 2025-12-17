@@ -107,7 +107,7 @@ std::string RecurringTransaction::ToString() const {
 void RecurringTransaction::ToBinary(std::ofstream& fout) const {
     // 1. Identity & Schedule
     BinaryFileHelper::WriteString(fout, id);
-    BinaryFileHelper::WriteInt(fout, static_cast<int>(frequency));
+    BinaryFileHelper::Write<int>(fout, static_cast<int>(frequency));
     BinaryFileHelper::WriteDate(fout, startDate);
     BinaryFileHelper::WriteDate(fout, endDate);
     BinaryFileHelper::WriteDate(fout, lastGeneratedDate);
@@ -115,15 +115,15 @@ void RecurringTransaction::ToBinary(std::ofstream& fout) const {
     // 2.Template Data
     BinaryFileHelper::WriteString(fout, walletId);
     BinaryFileHelper::WriteString(fout, categoryID);
-    BinaryFileHelper::WriteDouble(fout, amount);
-    BinaryFileHelper::WriteInt(fout, static_cast<int>(type));
+    BinaryFileHelper::Write<double>(fout, amount);
+    BinaryFileHelper::Write<int>(fout, static_cast<int>(type));
     BinaryFileHelper::WriteString(fout, description);
 }
 
 RecurringTransaction* RecurringTransaction::FromBinary(std::ifstream& fin) {
     // 1. Identity & Schedule
     std::string id = BinaryFileHelper::ReadString(fin);
-    Frequency freq = static_cast<Frequency>(BinaryFileHelper::ReadInt(fin));
+    Frequency freq = static_cast<Frequency>(BinaryFileHelper::Read<int>(fin));
     Date start = BinaryFileHelper::ReadDate(fin);
     Date end = BinaryFileHelper::ReadDate(fin);
     Date lastGen = BinaryFileHelper::ReadDate(fin);
@@ -131,8 +131,8 @@ RecurringTransaction* RecurringTransaction::FromBinary(std::ifstream& fin) {
     // 2. Template Data
     std::string wId = BinaryFileHelper::ReadString(fin);
     std::string catId = BinaryFileHelper::ReadString(fin);
-    double amt = BinaryFileHelper::ReadDouble(fin);
-    TransactionType type = static_cast<TransactionType>(BinaryFileHelper::ReadInt(fin));
+    double amt = BinaryFileHelper::Read<double>(fin);
+    TransactionType type = static_cast<TransactionType>(BinaryFileHelper::Read<int>(fin));
     std::string desc = BinaryFileHelper::ReadString(fin);
     
     // 3. Create Object

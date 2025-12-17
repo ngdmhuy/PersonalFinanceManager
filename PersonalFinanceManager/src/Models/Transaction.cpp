@@ -65,27 +65,27 @@ std::string Transaction::ToString() const {
 
 void Transaction::ToBinary(std::ofstream& fout) const {
     // 1. Write the Type Identifier FIRST (for polymorphism)
-    BinaryFileHelper::WriteInt(fout, static_cast<int>(type));
+    BinaryFileHelper::Write<int>(fout, static_cast<int>(type));
     
     // 2. Write common fields
     BinaryFileHelper::WriteString(fout, id);
     BinaryFileHelper::WriteString(fout, walletId);
     BinaryFileHelper::WriteString(fout, categoryId);
-    BinaryFileHelper::WriteDouble(fout, amount);
+    BinaryFileHelper::Write<double>(fout, amount);
     BinaryFileHelper::WriteDate(fout, date);
     BinaryFileHelper::WriteString(fout, description);
 }
 
 Transaction* Transaction::FromBinary(std::ifstream& fin) {
     // 1. Read the Type Identifier
-    int typeCode = BinaryFileHelper::ReadInt(fin);
+    int typeCode = BinaryFileHelper::Read<int>(fin);
     TransactionType type = static_cast<TransactionType>(typeCode);
     
     // 2. Read Common Fields
     std::string id = BinaryFileHelper::ReadString(fin);
     std::string wId = BinaryFileHelper::ReadString(fin);
     std::string catId = BinaryFileHelper::ReadString(fin);
-    double amt = BinaryFileHelper::ReadDouble(fin);
+    double amt = BinaryFileHelper::Read<double>(fin);
     Date d = BinaryFileHelper::ReadDate(fin);
     std::string desc = BinaryFileHelper::ReadString(fin);
     
