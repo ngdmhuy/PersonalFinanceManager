@@ -14,8 +14,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 
 NavigationController::NavigationController(AppController* app) : appController(app), running(false) {}
 
@@ -79,7 +77,7 @@ void NavigationController::HandleMainMenuChoice(char c) {
     }
 }
 
-void NavigationController::PauseWithMessage(const string& msg) {
+void NavigationController::PauseWithMessage(const std::string& msg) {
     view.PrintFooter(msg);
     GetKeyPress();
 }

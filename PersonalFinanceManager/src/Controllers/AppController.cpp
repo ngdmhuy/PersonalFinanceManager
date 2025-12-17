@@ -81,7 +81,7 @@ static void LoadTable(const std::string& filename, ArrayList<T*>* list, HashMap<
 // 1. CONSTRUCTOR & DESTRUCTOR
 // ==========================================
 
-AppController::AppController() {
+AppController::AppController(ConsoleView* v) : view(v) {
     // 1. Initialize the Storage Lists (The "Tables")
     this->transactions = new ArrayList<Transaction*>();
     this->recurringTransactions = new ArrayList<RecurringTransaction*>();
@@ -119,7 +119,7 @@ AppController::~AppController() {
     if (categoriesMap) delete categoriesMap;
     if (incomeSourcesMap) delete incomeSourcesMap;
     
-    std::cout << "[System] Memory cleaned up successfully.\n";
+    if (view) view->ShowInfo("Memory cleaned up successfully.");
 }
 
 // ==========================================
@@ -133,7 +133,7 @@ void AppController::SaveData() {
     SaveTable(FILE_TRANSACTIONS, transactions);
     SaveTable(FILE_RECURRING, recurringTransactions);
     
-    std::cout << "[System] Data saved to disk.\n";
+    if (view) view->ShowSuccess("Data saved to disk.");
 }
 
 void AppController::LoadData() {
@@ -144,7 +144,7 @@ void AppController::LoadData() {
     LoadTable(FILE_TRANSACTIONS, transactions, transactionsMap);
     LoadTable(FILE_RECURRING, recurringTransactions, recurringTransactionsMap);
     
-    std::cout << "[System] Data loaded from disk.\n";
+    if (view) view->ShowSuccess("Data loaded from disk.");
 }
 
 // ==========================================
@@ -153,13 +153,13 @@ void AppController::LoadData() {
 
 void AppController::AddWallet(const std::string& name, double initialBalance) {
     if (IsStringEmptyOrWhitespace(name)) {
-        std::cout << "[Error] Wallet creation failed: Name cannot be empty.\n";
+        if (view) view->ShowError("Wallet creation failed: Name cannot be empty.");
         return;
     }
     
     for (size_t i = 0; i < walletsList->Count(); ++i) {
         if (walletsList->Get(i)->GetName() == name) {
-            std::cout << "[Warning] Wallet '" << name << "' already exists.\n";
+            if (view) view->ShowWarning("Wallet '" + name + "' already exists.");
             break;
         }
     }
@@ -175,7 +175,7 @@ void AppController::AddWallet(const std::string& name, double initialBalance) {
     walletsMap->Put(newId, newWallet);
     walletsList->Add(newWallet);
     
-    std::cout << "[Success] Wallet created: " << name << " (ID: " << newId << ")\n";
+    if (view) view->ShowSuccess("Wallet created: " + name + " (ID: " + newId + ")");
 }
 
 Wallet* AppController::GetWalletById(const std::string& id) {
@@ -197,7 +197,7 @@ double AppController::GetTotalBalance() const {
 
 void AppController::AddCategory(const std::string& name) {
     if (IsStringEmptyOrWhitespace(name)) {
-        std::cout << "[Error] Category name cannot be empty.\n";
+        if (view) view->ShowError("Category name cannot be empty.");
         return;
     }
 
@@ -219,7 +219,7 @@ Category* AppController::GetCategoryById(const std::string& id) {
 
 void AppController::AddIncomeSource(const std::string& name) {
     if (IsStringEmptyOrWhitespace(name)) {
-        std::cout << "[Error] Source name cannot be empty.\n";
+        if (view) view->ShowError("Source name cannot be empty.");
         return;
     }
     
@@ -245,24 +245,24 @@ IncomeSource* AppController::GetIncomeSourceById(const std::string& id) {
 
 void AppController::AddTransaction(double amount, std::string walletId, std::string categoryOrSourceId, TransactionType type, Date date, std::string description) {
     if (amount <= 0) {
-        std::cout << "[Error] Transaction amount must be positive.\n";
+        if (view) view->ShowError("Transaction amount must be positive.");
         return;
     }
 
     Wallet* wallet = GetWalletById(walletId);
     if (wallet == nullptr) {
-        std::cout << "[Error] Wallet ID not found: " << walletId << "\n";
+        if (view) view->ShowError("Wallet ID not found: " + walletId);
         return;
     }
 
     if (type == TransactionType::Expense) {
         if (GetCategoryById(categoryOrSourceId) == nullptr) {
-             std::cout << "[Error] Expense Category not found.\n";
+             if (view) view->ShowError("Expense Category not found.");
              return;
         }
     } else {
         if (GetIncomeSourceById(categoryOrSourceId) == nullptr) {
-            std::cout << "[Error] Income Source not found.\n";
+            if (view) view->ShowError("Income Source not found.");
             return;
         }
     }
@@ -286,8 +286,7 @@ void AppController::AddTransaction(double amount, std::string walletId, std::str
     transactions->Add(newTrans);
     transactionsMap->Put(transId, newTrans);
     
-    std::cout << "[Success] Transaction added. New Wallet Balance: "
-              << std::fixed << std::setprecision(0) << wallet->GetBalance() << "\n";
+    if (view) view->ShowSuccess("Transaction added. New Wallet Balance: " + std::to_string(static_cast<long>(wallet->GetBalance())));
 }
 
 bool AppController::DeleteTransaction(const std::string& transactionId) {
@@ -303,7 +302,7 @@ bool AppController::DeleteTransaction(const std::string& transactionId) {
     }
 
     if (foundIndex == -1 || target == nullptr) {
-        std::cout << "[Error] Transaction ID not found: " << transactionId << "\n";
+        if (view) view->ShowError("Transaction ID not found: " + transactionId);
         return false;
     }
 
@@ -314,10 +313,9 @@ bool AppController::DeleteTransaction(const std::string& transactionId) {
         } else {
             w->AddAmount(target->GetAmount());
         }
-        std::cout << "[Info] Wallet balance restored. New Balance: "
-                  << std::fixed << std::setprecision(0) << w->GetBalance() << "\n";
+        if (view) view->ShowInfo("Wallet balance restored. New Balance: " + std::to_string(static_cast<long>(w->GetBalance())));
     } else {
-        std::cout << "[Warning] Linked Wallet not found. Balance not restored.\n";
+        if (view) view->ShowWarning("Linked Wallet not found. Balance not restored.");
     }
 
     transactions->RemoveAt(foundIndex);
@@ -332,17 +330,17 @@ bool AppController::DeleteTransaction(const std::string& transactionId) {
 
 void AppController::AddRecurringTransaction(Frequency freq, Date startDate, Date endDate, std::string walletId, std::string categoryId, double amount, TransactionType type, std::string desc) {
     if (endDate.IsValid() && startDate > endDate) {
-        std::cout << "[Error] Invalid Date Range: Start > End.\n";
+        if (view) view->ShowError("Invalid Date Range: Start > End.");
         return;
     }
     
     if (GetWalletById(walletId) == nullptr) {
-        std::cout << "[Error] Wallet ID not found.\n";
+        if (view) view->ShowError("Wallet ID not found.");
         return;
     }
 
     if (amount <= 0) {
-        std::cout << "[Error] Amount must be positive.\n";
+        if (view) view->ShowError("Amount must be positive.");
         return;
     }
 
@@ -354,14 +352,14 @@ void AppController::AddRecurringTransaction(Frequency freq, Date startDate, Date
     
     RecurringTransaction* rt = new RecurringTransaction(id, freq, startDate, endDate, walletId, categoryId, amount, type, desc);
     recurringTransactions->Add(rt);
-    std::cout << "[Success] Recurring transaction scheduled.\n";
+    if (view) view->ShowSuccess("Recurring transaction scheduled.");
 }
 
 void AppController::ProcessRecurringTransactions() {
     Date today = Date::GetTodayDate();
     int generatedCount = 0;
 
-    std::cout << "[System] Checking recurring transactions...\n";
+    if (view) view->ShowInfo("Checking recurring transactions...");
 
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         RecurringTransaction* rt = recurringTransactions->Get(i);
@@ -387,12 +385,12 @@ void AppController::ProcessRecurringTransactions() {
 
             rt->SetLastGeneratedDate(today);
             generatedCount++;
-            std::cout << "[Auto] Generated: " << rt->GetDescription() << " (" << rt->GetAmount() << ")\n";
+            if (view) view->ShowSuccess("Generated: " + rt->GetDescription() + " (" + std::to_string(static_cast<long>(rt->GetAmount())) + ")");
         }
     }
 
     if (generatedCount == 0) {
-        std::cout << "[System] No new recurring transactions due today.\n";
+        if (view) view->ShowInfo("No new recurring transactions due today.");
     }
 }
 
@@ -419,30 +417,30 @@ ArrayList<Transaction*>* AppController::GetTransactionsByDateRange(Date start, D
 void AppController::EditWallet(const std::string& id, const std::string& newName) {
     Wallet* w = GetWalletById(id);
     if (w == nullptr) {
-        std::cout << "[Error] Wallet ID not found: " << id << "\n";
+        if (view) view->ShowError("Wallet ID not found: " + id);
         return;
     }
 
     if (IsStringEmptyOrWhitespace(newName)) {
-         std::cout << "[Error] Update failed: New name cannot be empty.\n";
+         if (view) view->ShowError("Update failed: New name cannot be empty.");
          return;
     }
 
     w->SetName(newName); 
-    std::cout << "[Success] Wallet updated to: " << newName << "\n";
+    if (view) view->ShowSuccess("Wallet updated to: " + newName);
 }
 
 bool AppController::DeleteWallet(const std::string& id) {
     Wallet* w = GetWalletById(id);
     if (w == nullptr) {
-        std::cout << "[Error] Wallet ID not found.\n";
+        if (view) view->ShowError("Wallet ID not found.");
         return false;
     }
 
     // Dependency Check: Transactions
     for (size_t i = 0; i < transactions->Count(); ++i) {
         if (transactions->Get(i)->GetWalletId() == id) {
-            std::cout << "[Error] Cannot delete wallet. It contains existing transactions.\n";
+            if (view) view->ShowError("Cannot delete wallet. It contains existing transactions.");
             return false;
         }
     }
@@ -450,7 +448,7 @@ bool AppController::DeleteWallet(const std::string& id) {
     // Dependency Check: Recurring
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         if (recurringTransactions->Get(i)->GetWalletId() == id) {
-             std::cout << "[Error] Cannot delete wallet. It is used in a Recurring Transaction setup.\n";
+             if (view) view->ShowError("Cannot delete wallet. It is used in a Recurring Transaction setup.");
              return false;
         }
     }
@@ -467,7 +465,7 @@ bool AppController::DeleteWallet(const std::string& id) {
     if (indexToRemove != -1) walletsList->RemoveAt(indexToRemove);
 
     delete w; 
-    std::cout << "[Success] Wallet deleted successfully.\n";
+    if (view) view->ShowSuccess("Wallet deleted successfully.");
     return true;
 }
 
@@ -480,7 +478,7 @@ bool AppController::DeleteCategory(const std::string& id) {
         Transaction* t = transactions->Get(i);
         if (t->GetType() == TransactionType::Expense) {
             if (t->GetCategoryId() == id) {
-                std::cout << "[Error] Cannot delete Category. Used in Transaction ID: " << t->GetId() << "\n";
+                if (view) view->ShowError("Cannot delete Category. Used in Transaction ID: " + t->GetId());
                 return false;
             }
         }
@@ -489,14 +487,14 @@ bool AppController::DeleteCategory(const std::string& id) {
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         RecurringTransaction* rt = recurringTransactions->Get(i);
         if (rt->GetType() == TransactionType::Expense && rt->GetCategoryId() == id) {
-             std::cout << "[Error] Cannot delete Category. Used in a Recurring Transaction.\n";
+             if (view) view->ShowError("Cannot delete Category. Used in a Recurring Transaction.");
              return false;
         }
     }
 
     Category* c = GetCategoryById(id);
     if (!c) {
-        std::cout << "[Error] Category ID not found.\n";
+        if (view) view->ShowError("Category ID not found.");
         return false;
     }
 
@@ -509,7 +507,7 @@ bool AppController::DeleteCategory(const std::string& id) {
     if(idx != -1) categoriesList->RemoveAt(idx);
     
     delete c;
-    std::cout << "[Success] Category deleted successfully.\n";
+    if (view) view->ShowSuccess("Category deleted successfully.");
     return true;
 }
 
@@ -518,7 +516,7 @@ bool AppController::DeleteIncomeSource(const std::string& id) {
         Transaction* t = transactions->Get(i);
         if (t->GetType() == TransactionType::Income) {
             if (t->GetCategoryId() == id) {
-                std::cout << "[Error] Cannot delete Source. Used in Transaction ID: " << t->GetId() << "\n";
+                if (view) view->ShowError("Cannot delete Source. Used in Transaction ID: " + t->GetId());
                 return false;
             }
         }
@@ -527,7 +525,7 @@ bool AppController::DeleteIncomeSource(const std::string& id) {
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         RecurringTransaction* rt = recurringTransactions->Get(i);
         if (rt->GetType() == TransactionType::Income && rt->GetCategoryId() == id) {
-             std::cout << "[Error] Cannot delete Source. Used in a Recurring Transaction.\n";
+             if (view) view->ShowError("Cannot delete Source. Used in a Recurring Transaction.");
              return false;
         }
     }
@@ -544,7 +542,7 @@ bool AppController::DeleteIncomeSource(const std::string& id) {
     if(idx != -1) incomeSourcesList->RemoveAt(idx);
     
     delete s;
-    std::cout << "[Success] Income Source deleted.\n";
+    if (view) view->ShowSuccess("Income Source deleted.");
     return true;
 }
 
@@ -554,20 +552,20 @@ bool AppController::DeleteIncomeSource(const std::string& id) {
 
 bool AppController::EditTransaction(const std::string& id, double newAmount, Date newDate, std::string newDesc) {
     if (newAmount <= 0) {
-        std::cout << "[Error] Amount must be positive.\n";
+        if (view) view->ShowError("Amount must be positive.");
         return false;
     }
 
     Transaction** tPtr = transactionsMap->Get(id);
     if (tPtr == nullptr) {
-        std::cout << "[Error] Transaction ID not found: " << id << "\n";
+        if (view) view->ShowError("Transaction ID not found: " + id);
         return false;
     }
     Transaction* target = *tPtr;
 
     Wallet* w = GetWalletById(target->GetWalletId());
     if (w == nullptr) {
-        std::cout << "[Critical Error] Wallet linked to this transaction not found!\n";
+        if (view) view->ShowError("Wallet linked to this transaction not found!");
         return false;
     }
 
@@ -590,7 +588,7 @@ bool AppController::EditTransaction(const std::string& id, double newAmount, Dat
     target->SetDate(newDate);
     target->SetDescription(newDesc);
 
-    std::cout << "[Success] Transaction updated. Wallet balance adjusted.\n";
+    if (view) view->ShowSuccess("Transaction updated. Wallet balance adjusted.");
     return true;
 }
 

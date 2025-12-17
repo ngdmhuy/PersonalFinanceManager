@@ -14,8 +14,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 void NavigationController::ShowExpenseFlow() {
     bool inExpenseMenu = true;
     
@@ -66,24 +64,24 @@ void NavigationController::HandleAddExpense() {
     }
 
     view.MoveToXY(5, 4);
-    cout << "Available Wallets:" << endl;
+    std::cout << "Available Wallets:" << std::endl;
     
-    string headers[] = {"Index", "Wallet Name", "Balance"};
+    std::string headers[] = {"Index", "Wallet Name", "Balance"};
     int widths[] = {10, 30, 20};
     view.PrintTableHeader(headers, widths, 3);
 
     for (size_t i = 0; i < wallets->Count(); ++i) {
         Wallet* w = wallets->Get(i);
-        string data[] = {to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long>(w->GetBalance()))};
+        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long>(w->GetBalance()))};
         view.PrintTableRow(data, widths, 3);
     }
     view.PrintTableSeparator(widths, 3);
 
     view.MoveToXY(5, 5 + wallets->Count() + 3);
-    cout << "Enter wallet index (1-" << wallets->Count() << "): ";
+    std::cout << "Enter wallet index (1-" << wallets->Count() << "): ";
     int walletIdx;
-    cin >> walletIdx;
-    cin.ignore();
+    std::cin >> walletIdx;
+    std::cin.ignore();
 
     if (walletIdx < 1 || walletIdx > static_cast<int>(wallets->Count())) {
         view.ShowError("Invalid wallet selection.");
@@ -92,7 +90,7 @@ void NavigationController::HandleAddExpense() {
     }
 
     Wallet* selectedWallet = wallets->Get(walletIdx - 1);
-    string walletId = selectedWallet->GetId();
+    std::string walletId = selectedWallet->GetId();
 
     // Step 2: Get Amount
     view.ClearScreen();
@@ -107,7 +105,7 @@ void NavigationController::HandleAddExpense() {
     // Step 4: Get Description
     view.ClearScreen();
     view.PrintHeader("ADD EXPENSE - DESCRIPTION");
-    string description = InputValidator::GetValidString("Enter description: ");
+    std::string description = InputValidator::GetValidString("Enter description: ");
 
     // Step 5: Select Category
     ArrayList<Category*>* categories = appController->GetCategoriesList();
@@ -120,24 +118,24 @@ void NavigationController::HandleAddExpense() {
     view.ClearScreen();
     view.PrintHeader("ADD EXPENSE - CATEGORY");
     view.MoveToXY(5, 4);
-    cout << "Available Categories:" << endl;
+    std::cout << "Available Categories:" << std::endl;
 
-    string catHeaders[] = {"Index", "Category Name", ""};
+    std::string catHeaders[] = {"Index", "Category Name", ""};
     int catWidths[] = {10, 40, 20};
     view.PrintTableHeader(catHeaders, catWidths, 3);
 
     for (size_t i = 0; i < categories->Count(); ++i) {
         Category* cat = categories->Get(i);
-        string catData[] = {to_string(i + 1), cat->GetName(), ""};
+        std::string catData[] = {std::to_string(i + 1), cat->GetName(), ""};
         view.PrintTableRow(catData, catWidths, 3);
     }
     view.PrintTableSeparator(catWidths, 3);
 
     view.MoveToXY(5, 5 + categories->Count() + 3);
-    cout << "Enter category index (1-" << categories->Count() << "): ";
+    std::cout << "Enter category index (1-" << categories->Count() << "): ";
     int catIdx;
-    cin >> catIdx;
-    cin.ignore();
+    std::cin >> catIdx;
+    std::cin.ignore();
 
     if (catIdx < 1 || catIdx > static_cast<int>(categories->Count())) {
         view.ShowError("Invalid category selection.");
@@ -146,7 +144,7 @@ void NavigationController::HandleAddExpense() {
     }
 
     Category* selectedCategory = categories->Get(catIdx - 1);
-    string categoryId = selectedCategory->GetId();
+    std::string categoryId = selectedCategory->GetId();
 
     // Step 6: Add transaction to AppController
     try {
@@ -158,19 +156,19 @@ void NavigationController::HandleAddExpense() {
         view.ShowSuccess("Expense recorded!!");
         
         view.MoveToXY(5, 7);
-        cout << "Wallet: " << selectedWallet->GetName() << endl;
+        std::cout << "Wallet: " << selectedWallet->GetName() << std::endl;
         view.MoveToXY(5, 8);
-        cout << "Amount: " << view.FormatCurrency(static_cast<long>(amount)) << endl;
+        std::cout << "Amount: " << view.FormatCurrency(static_cast<long>(amount)) << std::endl;
         view.MoveToXY(5, 9);
-        cout << "Category: " << selectedCategory->GetName() << endl;
+        std::cout << "Category: " << selectedCategory->GetName() << std::endl;
         view.MoveToXY(5, 10);
-        cout << "Date: " << date.ToString() << endl;
+        std::cout << "Date: " << date.ToString() << std::endl;
         view.MoveToXY(5, 11);
-        cout << "Description: " << description << endl;
+        std::cout << "Description: " << description << std::endl;
         
         PauseWithMessage("Press any key to return to menu...");
-    } catch (const exception& e) {
-        view.ShowError(string("Error adding expense: ") + e.what());
+    } catch (const std::exception& e) {
+        view.ShowError(std::string("Error adding expense: ") + e.what());
         PauseWithMessage("Press any key to continue...");
     }
 }

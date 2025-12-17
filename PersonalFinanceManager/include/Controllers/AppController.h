@@ -14,6 +14,7 @@
 #include "../Utils/HashMap.h"
 #include "../Utils/Date.h"
 #include "../Utils/Enums.h"
+#include "../Views/ConsoleView.h"
 
 class Transaction;
 class RecurringTransaction;
@@ -30,6 +31,9 @@ class IncomeSource;
  */
 class AppController {
 private:
+    // --- UI Messaging ---
+    ConsoleView* view;
+
     // --- Data Storage (The "Database") ---
     ArrayList<Transaction*>* transactions;
     ArrayList<RecurringTransaction*>* recurringTransactions;
@@ -54,7 +58,7 @@ private:
 public:
 
     // 1. CONSTRUCTOR & DESTRUCTOR
-    AppController();
+    AppController(ConsoleView* v);
     ~AppController();
 
     // 2. DATA PERSISTENCE

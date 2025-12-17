@@ -14,8 +14,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 void NavigationController::ShowWalletFlow() {
     bool inWalletMenu = true;
 
@@ -47,14 +45,14 @@ void NavigationController::ShowWalletFlow() {
 void NavigationController::HandleCreateWallet() {
     view.ClearScreen();
     view.PrintHeader("CREATE WALLET");
-    string name = InputValidator::GetValidString("Enter wallet name: ");
+    std::string name = InputValidator::GetValidString("Enter wallet name: ");
     double initial = InputValidator::GetValidMoney("Enter initial balance: ");
 
     try {
         appController->AddWallet(name, initial);
         view.ShowSuccess("Wallet created successfully.");
-    } catch (const exception& e) {
-        view.ShowError(string("Error creating wallet: ") + e.what());
+    } catch (const std::exception& e) {
+        view.ShowError(std::string("Error creating wallet: ") + e.what());
     }
     PauseWithMessage("Press any key to continue...");
 }
@@ -69,12 +67,12 @@ void NavigationController::HandleViewWallets() {
         return;
     }
 
-    string headers[] = {"Index", "Wallet Name", "Balance"};
+    std::string headers[] = {"Index", "Wallet Name", "Balance"};
     int widths[] = {10, 30, 20};
     view.PrintTableHeader(headers, widths, 3);
     for (size_t i = 0; i < wallets->Count(); ++i) {
         Wallet* w = wallets->Get(i);
-        string data[] = {to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long>(w->GetBalance()))};
+        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long>(w->GetBalance()))};
         view.PrintTableRow(data, widths, 3);
     }
     view.PrintTableSeparator(widths, 3);
@@ -98,21 +96,21 @@ void NavigationController::HandleDeleteWallet() {
         return;
     }
 
-    string headers[] = {"Index", "Wallet Name", "Balance"};
+    std::string headers[] = {"Index", "Wallet Name", "Balance"};
     int widths[] = {10, 30, 20};
     view.PrintTableHeader(headers, widths, 3);
     for (size_t i = 0; i < wallets->Count(); ++i) {
         Wallet* w = wallets->Get(i);
-        string data[] = {to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long>(w->GetBalance()))};
+        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long>(w->GetBalance()))};
         view.PrintTableRow(data, widths, 3);
     }
     view.PrintTableSeparator(widths, 3);
 
     view.MoveToXY(5, 6 + (int)wallets->Count());
-    cout << "Enter wallet index to delete (1-" << wallets->Count() << "): ";
+    std::cout << "Enter wallet index to delete (1-" << wallets->Count() << "): ";
     int idx = 0;
-    cin >> idx;
-    cin.ignore();
+    std::cin >> idx;
+    std::cin.ignore();
 
     if (idx < 1 || idx > static_cast<int>(wallets->Count())) {
         view.ShowError("Invalid wallet selection.");
@@ -122,9 +120,9 @@ void NavigationController::HandleDeleteWallet() {
 
     Wallet* target = wallets->Get(idx - 1);
     view.MoveToXY(5, 8 + (int)wallets->Count());
-    cout << "Are you sure you want to delete wallet '" << target->GetName() << "'? (Y/N): ";
+    std::cout << "Are you sure you want to delete wallet '" << target->GetName() << "'? (Y/N): ";
     int ch = GetKeyPress();
-    cout << endl;
+    std::cout << std::endl;
 
     if (ch != 'y' && ch != 'Y') {
         view.ShowInfo("Deletion cancelled.");

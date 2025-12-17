@@ -14,8 +14,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 void NavigationController::ShowReportsFlow() {
     bool inReportsMenu = true;
 
@@ -53,8 +51,8 @@ void NavigationController::HandleMonthlySummary() {
     long count = txs ? txs->Count() : 0;
     double totalBalance = appController->GetTotalBalance();
     view.MoveToXY(5,5);
-    cout << "Total transactions: " << count << endl;
-    cout << "Total balance across wallets: " << view.FormatCurrency(static_cast<long>(totalBalance)) << endl;
+    std::cout << "Total transactions: " << count << std::endl;
+    std::cout << "Total balance across wallets: " << view.FormatCurrency(static_cast<long>(totalBalance)) << std::endl;
     view.ShowInfo("Detailed monthly breakdown not implemented.");
     PauseWithMessage("Press any key to continue...");
 }
@@ -79,8 +77,8 @@ void NavigationController::HandleIncomeVsExpense() {
         }
     }
     view.MoveToXY(5,5);
-    cout << "Total Income: " << view.FormatCurrency(static_cast<long>(income)) << endl;
-    cout << "Total Expense: " << view.FormatCurrency(static_cast<long>(expense)) << endl;
+    std::cout << "Total Income: " << view.FormatCurrency(static_cast<long>(income)) << std::endl;
+    std::cout << "Total Expense: " << view.FormatCurrency(static_cast<long>(expense)) << std::endl;
     PauseWithMessage("Press any key to continue...");
 }
 
@@ -93,15 +91,15 @@ void NavigationController::HandleWalletBalanceOverview() {
         PauseWithMessage("Press any key to continue...");
         return;
     }
-    string headers[] = {"Wallet", "Balance", "% of Total"};
+    std::string headers[] = {"Wallet", "Balance", "% of Total"};
     int widths[] = {30, 20, 15};
     view.PrintTableHeader(headers, widths, 3);
     double total = appController->GetTotalBalance();
     for (size_t i = 0; i < wallets->Count(); ++i) {
         Wallet* w = wallets->Get(i);
         double bal = w->GetBalance();
-        string pct = total != 0 ? to_string(static_cast<int>((bal / total) * 100)) + "%" : "0%";
-        string data[] = {w->GetName(), view.FormatCurrency(static_cast<long>(bal)), pct};
+        std::string pct = total != 0 ? std::to_string(static_cast<int>((bal / total) * 100)) + "%" : "0%";
+        std::string data[] = {w->GetName(), view.FormatCurrency(static_cast<long>(bal)), pct};
         view.PrintTableRow(data, widths, 3);
     }
     view.PrintTableSeparator(widths, 3);
