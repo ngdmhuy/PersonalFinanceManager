@@ -34,17 +34,44 @@ void NavigationController::Run() {
 
     while (running) {
         // Show dashboard (uses appController internally)
-        dashboard.Display();
-
-        // Show main menu and get choice
-        char choice = menus.DisplayMainMenu();
-
-        if (choice == 27) { // ESC
-            running = false;
-            break;
+        while (true) {
+            char choice = dashboard.Display();
+            if (choice == 'm' || choice == 'M' || choice == 27) break;
+            view.ShowError("Invalid selection!!");
+            PauseWithMessage("Press any key to continue...");
         }
 
-        HandleMainMenuChoice(choice);
+        // Keep showing the Main Menu until user chooses to return to Dashboard (d/D) or exit (ESC)
+        while (running) {
+            char choice = menus.DisplayMainMenu();
+
+            if (choice == 27) { // ESC => exit app
+                running = false;
+                break;
+            }
+
+            if (choice == 'd' || choice == 'D') {
+                // Explicit request to return to Dashboard
+                break;
+            }
+
+            // Only accept valid menu commands; show error and re-display otherwise
+            switch (choice) {
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                    HandleMainMenuChoice(choice);
+                    break;
+                default:
+                    view.ShowError("Invalid selection. Try again.");
+                    PauseWithMessage("Press any key to continue...                 ");
+                    break;
+            }
+
+            // After handling a valid action, loop continues and the main menu is shown again.
+        }
     }
 
     Shutdown();

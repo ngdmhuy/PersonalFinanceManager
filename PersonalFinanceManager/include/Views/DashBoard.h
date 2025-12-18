@@ -15,10 +15,7 @@ private:
 
 public:
     /// @brief Displays main dashboard with total balance and wallet list
-    void Display();
-
-    /// @brief Show main menu options 
-    void ShowMainMenu();
+    char Display();
 
     /// @brief Bind Dashboard to the AppController so it can read live data
     void SetAppController(AppController* app) { this->appController = app; }

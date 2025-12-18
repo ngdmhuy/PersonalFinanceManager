@@ -6,7 +6,7 @@
 #include "Controllers/AppController.h"
  
 
-void Dashboard::Display() {
+char Dashboard::Display() {
     view.ClearScreen();
     view.PrintHeader("PERSONAL FINANCE MANAGER - DASHBOARD");
 
@@ -70,20 +70,8 @@ void Dashboard::Display() {
     }
     view.PrintTableSeparator(widths,numCols);
 
-    view.PrintShortcutFooter("[M] Main Menu  [ESC] Exit", "Dashboard READY");
+    view.PrintShortcutFooter("[M] Main Menu | [ESC] Exit", "Dashboard");
 
     // Wait for user input to navigate
-    char choice = GetKeyPress();
-    if (choice == 'm' || choice == 'M') {
-        ShowMainMenu();
-    }
-}
-
-void Dashboard::ShowMainMenu() {
-    std::cout << "\n" << Menus::MAIN_MENU_TITLE << "\n";
-    std::cout << Menus::MAIN_MENU_1 << "\n";
-    std::cout << Menus::MAIN_MENU_2 << "\n";
-    std::cout << Menus::MAIN_MENU_3 << "\n";
-    std::cout << Menus::MAIN_MENU_4 << "\n";
-    std::cout << Menus::MAIN_MENU_5 << "\n";
+    return GetKeyPress();
 }
