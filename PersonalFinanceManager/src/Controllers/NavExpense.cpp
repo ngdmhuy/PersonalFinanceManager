@@ -79,7 +79,7 @@ void NavigationController::HandleAddExpense() {
 
     // Select wallet using robust integer input
     view.MoveToXY(5, 9 + (int)wallets->Count());
-    int walletIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(wallets->Count())) + "): ", 1, static_cast<int>(wallets->Count()), 5, 9 + static_cast<int>(wallets->Count()));
+    int walletIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(wallets->Count())) + ") (0 to quit): ", 1, static_cast<int>(wallets->Count()), 5, 9 + static_cast<int>(wallets->Count()));
     if (walletIdx == 0) { view.ShowInfo("Selection cancelled."); PauseWithMessage("Press any key to continue..."); return; }
     Wallet* selectedWallet = wallets->Get(walletIdx - 1);
     std::string walletId = selectedWallet->GetId();
@@ -92,7 +92,7 @@ void NavigationController::HandleAddExpense() {
     // Step 3: Get Date
     view.ClearScreen();
     view.PrintHeader("ADD EXPENSE - DATE");
-    Date date = InputValidator::GetValidDate("Enter date (DD/MM/YYYY): ");
+    Date date = InputValidator::GetValidDate("Enter date (YYYY-MM-DD): ");
 
     // Step 4: Get Description
     view.ClearScreen();
@@ -125,7 +125,7 @@ void NavigationController::HandleAddExpense() {
 
     // Select category using robust integer input
     view.MoveToXY(5, 9 + (int)categories->Count());
-    int catIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(categories->Count())) + "): ", 1, static_cast<int>(categories->Count()), 5, 9 + static_cast<int>(categories->Count()));
+    int catIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(categories->Count())) + ") (0 to quit): ", 1, static_cast<int>(categories->Count()), 5, 9 + static_cast<int>(categories->Count()));
     if (catIdx == 0) { view.ShowInfo("Selection cancelled."); PauseWithMessage("Press any key to continue..."); return; }
     Category* selectedCategory = categories->Get(catIdx - 1);
     std::string categoryId = selectedCategory->GetId();
@@ -260,7 +260,7 @@ void NavigationController::HandleEditExpense() {
 
     // Get new values
     double newAmount = InputValidator::GetValidMoney("Enter new amount: ");
-    Date newDate = InputValidator::GetValidDate("Enter new date (DD/MM/YYYY): ");
+    Date newDate = InputValidator::GetValidDate("Enter new date (YYYY-MM-DD): ");
     std::string newDesc = InputValidator::GetValidString("Enter new description: ");
 
     bool ok = appController->EditTransaction(target->GetId(), newAmount, newDate, newDesc);
@@ -315,7 +315,7 @@ void NavigationController::HandleDeleteExpense() {
     view.PrintTableSeparator(widths, 3);
 
     view.MoveToXY(5, 9 + (int)expenses->Count());
-    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(expenses->Count())) + "): ", 1, static_cast<int>(expenses->Count()), 5, 9 + static_cast<int>(expenses->Count()));
+    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(expenses->Count())) + ") (0 to quit): ", 1, static_cast<int>(expenses->Count()), 5, 9 + static_cast<int>(expenses->Count()));
     if (idx == 0) { view.ShowInfo("Selection cancelled."); delete expenses; PauseWithMessage("Press any key to return..."); return; }
     Transaction* target = expenses->Get(idx - 1);
 

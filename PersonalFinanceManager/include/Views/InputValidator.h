@@ -36,11 +36,6 @@ private:
     /// @return true if amount > 0, false otherwise
     static bool ValidateMoney(double amount);
 
-    /// @brief Validates if date is not default (0/0/0)
-    /// @param date Date to validate
-    /// @return true if date is valid, false otherwise
-    static bool ValidateDate(const Date& date);
-
     /// @brief Validates if string is not empty
     /// @param str String to validate
     /// @return true if string is not empty, false otherwise

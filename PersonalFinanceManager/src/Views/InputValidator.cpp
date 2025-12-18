@@ -1,7 +1,6 @@
 #include "Views/InputValidator.h"
 #include "Views/ConsoleView.h"
 #include <iostream>
-#include <cctype>
 
 using namespace std;
 
@@ -29,7 +28,7 @@ Date InputValidator::GetValidDate(const string& prompt) {
         
         try {
             Date date = Date::FromString(dateStr);
-            if (ValidateDate(date)) {
+            if (date.IsValid()) {
                 return date;
             }
         } catch (...) {
@@ -98,11 +97,6 @@ int InputValidator::GetValidIndex(const std::string& prompt, int min, int max, i
 
 bool InputValidator::ValidateMoney(double amount) {
     return amount > 0;
-}
-
-bool InputValidator::ValidateDate(const Date& date) {
-    // Check if date is not default (0/0/0)
-    return !(date.GetDay() == 0 && date.GetMonth() == 0 && date.GetYear() == 0);
 }
 
 bool InputValidator::ValidateString(const string& str) {

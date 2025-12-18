@@ -57,12 +57,12 @@ public:
     // ==========================================
     
     /**
-     * @brief Parses a string in "DD/MM/YYYY" format.
+     * @brief Parses a string in "YYYY/MM/DD" format.
      */
     static Date FromString(const std::string& dateStr);
     
     /**
-     * @brief Returns string in "DD/MM/YYYY" format.
+     * @brief Returns string in "YYYY/MM/DD" format.
      */
     std::string ToString() const;
     

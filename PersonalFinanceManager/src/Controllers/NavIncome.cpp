@@ -79,7 +79,7 @@ void NavigationController::HandleAddIncome() {
     view.PrintTableSeparator(widths, 3);
 
     view.MoveToXY(5, 9 + (int)wallets->Count());
-    int walletIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(wallets->Count())) + "): ", 1, static_cast<int>(wallets->Count()), 5, 9 + static_cast<int>(wallets->Count()));
+    int walletIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(wallets->Count())) + ") (0 to quit): ", 1, static_cast<int>(wallets->Count()), 5, 9 + static_cast<int>(wallets->Count()));
     if (walletIdx == 0) { view.ShowInfo("Selection cancelled."); PauseWithMessage("Press any key to continue..."); return; }
     Wallet* selectedWallet = wallets->Get(walletIdx - 1);
     std::string walletId = selectedWallet->GetId();
@@ -92,7 +92,7 @@ void NavigationController::HandleAddIncome() {
     // Step 3: Get Date
     view.ClearScreen();
     view.PrintHeader("ADD INCOME - DATE");
-    Date date = InputValidator::GetValidDate("Enter date (DD/MM/YYYY): ");
+    Date date = InputValidator::GetValidDate("Enter date (YYYY-MM-DD): ");
 
     // Step 4: Get Description
     view.ClearScreen();
@@ -112,19 +112,19 @@ void NavigationController::HandleAddIncome() {
     view.MoveToXY(5, 4);
     std::cout << "Available Income Sources:" << std::endl;
 
-    std::string srcHeaders[] = {"Index", "Source Name", ""};
-    int srcWidths[] = {10, 40, 20};
-    view.PrintTableHeader(srcHeaders, srcWidths, 3);
+    std::string srcHeaders[] = {"Index", "Source Name"};
+    int srcWidths[] = {10, 40};
+    view.PrintTableHeader(srcHeaders, srcWidths, 2);
 
     for (size_t i = 0; i < sources->Count(); ++i) {
         IncomeSource* src = sources->Get(i);
-        std::string srcData[] = {std::to_string(i + 1), src->GetName(), ""};
-        view.PrintTableRow(srcData, srcWidths, 3);
+        std::string srcData[] = {std::to_string(i + 1), src->GetName()};
+        view.PrintTableRow(srcData, srcWidths, 2);
     }
-    view.PrintTableSeparator(srcWidths, 3);
+    view.PrintTableSeparator(srcWidths, 2);
 
     view.MoveToXY(5, 9 + (int)sources->Count());
-    int srcIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(sources->Count())) + "): ", 1, static_cast<int>(sources->Count()), 5, 9 + static_cast<int>(sources->Count()));
+    int srcIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(sources->Count())) + ") (0 to quit): ", 1, static_cast<int>(sources->Count()), 5, 9 + static_cast<int>(sources->Count()));
     if (srcIdx == 0) { view.ShowInfo("Selection cancelled."); PauseWithMessage("Press any key to continue..."); return; }
     IncomeSource* selectedSource = sources->Get(srcIdx - 1);
     std::string sourceId = selectedSource->GetId();
@@ -243,7 +243,7 @@ void NavigationController::HandleEditIncome() {
     view.PrintTableSeparator(widths, 6);
 
     view.MoveToXY(5, 9 + (int)incomes->Count());
-    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(incomes->Count())) + "): ", 1, static_cast<int>(incomes->Count()), 5, 9 + static_cast<int>(incomes->Count()));
+    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(incomes->Count())) + ") (0 to quit): ", 1, static_cast<int>(incomes->Count()), 5, 9 + static_cast<int>(incomes->Count()));
     if (idx == 0) { view.ShowInfo("Selection cancelled."); delete incomes; PauseWithMessage("Press any key to continue..."); return; }
     Transaction* target = incomes->Get(idx - 1);
 
@@ -314,7 +314,7 @@ void NavigationController::HandleDeleteIncome() {
     view.PrintTableSeparator(widths, 6);
 
     view.MoveToXY(5, 9 + (int)incomes->Count());
-    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(incomes->Count())) + "): ", 1, static_cast<int>(incomes->Count()), 5, 9 + static_cast<int>(incomes->Count()));
+    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(incomes->Count())) + ") (0 to quit): ", 1, static_cast<int>(incomes->Count()), 5, 9 + static_cast<int>(incomes->Count()));
     if (idx == 0) { view.ShowInfo("Selection cancelled."); delete incomes; PauseWithMessage("Press any key to continue..."); return; }
     Transaction* target = incomes->Get(idx - 1);
     view.MoveToXY(5, 11 + (int)incomes->Count());
