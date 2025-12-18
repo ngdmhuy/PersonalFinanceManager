@@ -15,7 +15,10 @@
 #include <iostream>
 
 
-NavigationController::NavigationController(AppController* app) : appController(app), running(false) {}
+NavigationController::NavigationController(AppController* app) : appController(app), running(false) {
+    // Bind dashboard to app controller so dashboard uses live in-memory data
+    dashboard.SetAppController(appController);
+}
 
 NavigationController::~NavigationController() {}
 

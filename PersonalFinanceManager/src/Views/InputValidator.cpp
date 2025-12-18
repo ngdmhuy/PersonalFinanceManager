@@ -56,6 +56,46 @@ string InputValidator::GetValidString(const string& prompt) {
     }
 }
 
+int InputValidator::GetValidIndex(const std::string& prompt, int min, int max, int x, int y) {
+    std::string line;
+    ConsoleView view;
+
+    while (true) {
+        // If a position is provided, move cursor there and clear the line so the prompt reuses the same spot
+        if (x >= 0 && y >= 0) {
+            view.MoveToXY(x, y);
+            int fill = 80 - (x < 0 ? 0 : x);
+            if (fill > 0) std::cout << std::string(fill, ' ');
+            view.MoveToXY(x, y);
+        }
+
+        std::cout << prompt;
+        std::cout << std::flush;
+        if (!std::getline(std::cin, line)) return 0; // EOF -> cancel
+
+        // Trim whitespace
+        size_t start = line.find_first_not_of(" \t\r\n");
+        if (start == std::string::npos) {
+            // Empty line = cancel
+            return 0;
+        }
+        size_t end = line.find_last_not_of(" \t\r\n");
+        std::string token = line.substr(start, end - start + 1);
+
+        // Allow explicit 0 to cancel
+        if (token == "0") return 0;
+
+        try {
+            int value = std::stoi(token);
+            if (value >= min && value <= max) return value;
+            view.ShowError("Invalid selection. Please enter a number between " + std::to_string(min) + " and " + std::to_string(max) + ".");
+        } catch (...) {
+            view.ShowError("Invalid input. Please enter a number.");
+        }
+        // The loop will reposition the cursor and reprint the prompt if x/y were provided
+    }
+}
+
 bool InputValidator::ValidateMoney(double amount) {
     return amount > 0;
 }

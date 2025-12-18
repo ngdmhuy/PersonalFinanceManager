@@ -21,6 +21,15 @@ public:
     /// @return std::string if valid, keeps asking until valid input
     static std::string GetValidString(const std::string& prompt);
 
+    /// @brief Prompts user for an integer index within a range and validates input
+    /// @param prompt Message to display to user
+    /// @param min Minimum acceptable integer (inclusive)
+    /// @param max Maximum acceptable integer (inclusive)
+    /// @param x Column where the prompt will be printed (optional)
+    /// @param y Row where the prompt will be printed (optional)
+    /// @return Validated integer index between min and max
+    static int GetValidIndex(const std::string& prompt, int min, int max, int x = -1, int y = -1);
+
 private:
     /// @brief Validates if money amount is greater than 0
     /// @param amount Amount to validate

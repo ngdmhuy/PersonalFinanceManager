@@ -106,20 +106,11 @@ void NavigationController::HandleDeleteWallet() {
     }
     view.PrintTableSeparator(widths, 3);
 
-    view.MoveToXY(5, 6 + (int)wallets->Count());
-    std::cout << "Select index (1-" << wallets->Count() << "): ";
-    int idx = 0;
-    std::cin >> idx;
-    std::cin.ignore();
-
-    if (idx < 1 || idx > static_cast<int>(wallets->Count())) {
-        view.ShowError("Invalid wallet selection.");
-        PauseWithMessage("Press any key to continue...");
-        return;
-    }
+    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(wallets->Count())) + "): ", 1, static_cast<int>(wallets->Count()), 5, 9 + static_cast<int>(wallets->Count()));
+    if (idx == 0) { view.ShowInfo("Selection cancelled."); PauseWithMessage("Press any key to continue..."); return; }
 
     Wallet* target = wallets->Get(idx - 1);
-    view.MoveToXY(5, 8 + (int)wallets->Count());
+    view.MoveToXY(5, 11 + (int)wallets->Count());
     std::cout << "Are you sure you want to delete wallet '" << target->GetName() << "'? (Y/N): ";
     int ch = GetKeyPress();
     std::cout << std::endl;

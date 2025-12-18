@@ -78,18 +78,9 @@ void NavigationController::HandleAddIncome() {
     }
     view.PrintTableSeparator(widths, 3);
 
-    view.MoveToXY(5, 6 + (int)wallets->Count());
-    std::cout << "Select index (1-" << wallets->Count() << "): ";
-    int walletIdx;
-    std::cin >> walletIdx;
-    std::cin.ignore();
-
-    if (walletIdx < 1 || walletIdx > (int)(wallets->Count())) {
-        view.ShowError("Invalid wallet selection.");
-        PauseWithMessage("Press any key to continue...");
-        return;
-    }
-
+    view.MoveToXY(5, 9 + (int)wallets->Count());
+    int walletIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(wallets->Count())) + "): ", 1, static_cast<int>(wallets->Count()), 5, 9 + static_cast<int>(wallets->Count()));
+    if (walletIdx == 0) { view.ShowInfo("Selection cancelled."); PauseWithMessage("Press any key to continue..."); return; }
     Wallet* selectedWallet = wallets->Get(walletIdx - 1);
     std::string walletId = selectedWallet->GetId();
 
@@ -132,18 +123,9 @@ void NavigationController::HandleAddIncome() {
     }
     view.PrintTableSeparator(srcWidths, 3);
 
-    view.MoveToXY(5, 6 + (int)sources->Count());
-    std::cout << "Select index (1-" << sources->Count() << "): ";
-    int srcIdx;
-    std::cin >> srcIdx;
-    std::cin.ignore();
-
-    if (srcIdx < 1 || srcIdx > static_cast<int>(sources->Count())) {
-        view.ShowError("Invalid source selection.");
-        PauseWithMessage("Press any key to continue...");
-        return;
-    }
-
+    view.MoveToXY(5, 9 + (int)sources->Count());
+    int srcIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(sources->Count())) + "): ", 1, static_cast<int>(sources->Count()), 5, 9 + static_cast<int>(sources->Count()));
+    if (srcIdx == 0) { view.ShowInfo("Selection cancelled."); PauseWithMessage("Press any key to continue..."); return; }
     IncomeSource* selectedSource = sources->Get(srcIdx - 1);
     std::string sourceId = selectedSource->GetId();
 
@@ -260,19 +242,9 @@ void NavigationController::HandleEditIncome() {
     }
     view.PrintTableSeparator(widths, 6);
 
-    view.MoveToXY(5, 6 + (int)incomes->Count());
-    std::cout << "Select index (1-" << incomes->Count() << "): ";
-    int idx = 0;
-    std::cin >> idx;
-    std::cin.ignore();
-
-    if (idx < 1 || idx > static_cast<int>(incomes->Count())) {
-        view.ShowError("Invalid selection.");
-        PauseWithMessage("Press any key to continue...");
-        delete incomes;
-        return;
-    }
-
+    view.MoveToXY(5, 9 + (int)incomes->Count());
+    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(incomes->Count())) + "): ", 1, static_cast<int>(incomes->Count()), 5, 9 + static_cast<int>(incomes->Count()));
+    if (idx == 0) { view.ShowInfo("Selection cancelled."); delete incomes; PauseWithMessage("Press any key to continue..."); return; }
     Transaction* target = incomes->Get(idx - 1);
 
     // Show current values and prompt new ones
@@ -341,21 +313,11 @@ void NavigationController::HandleDeleteIncome() {
     }
     view.PrintTableSeparator(widths, 6);
 
-    view.MoveToXY(5, 6 + (int)incomes->Count());
-    std::cout << "Select index (1-" << incomes->Count() << "): ";
-    int idx = 0;
-    std::cin >> idx;
-    std::cin.ignore();
-
-    if (idx < 1 || idx > static_cast<int>(incomes->Count())) {
-        view.ShowError("Invalid selection.");
-        PauseWithMessage("Press any key to continue...");
-        delete incomes;
-        return;
-    }
-
+    view.MoveToXY(5, 9 + (int)incomes->Count());
+    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(incomes->Count())) + "): ", 1, static_cast<int>(incomes->Count()), 5, 9 + static_cast<int>(incomes->Count()));
+    if (idx == 0) { view.ShowInfo("Selection cancelled."); delete incomes; PauseWithMessage("Press any key to continue..."); return; }
     Transaction* target = incomes->Get(idx - 1);
-    view.MoveToXY(5, 8 + (int)incomes->Count());
+    view.MoveToXY(5, 11 + (int)incomes->Count());
     std::cout << "Are you sure you want to delete this income? (Y/N): ";
     int ch = GetKeyPress();
     std::cout << std::endl;

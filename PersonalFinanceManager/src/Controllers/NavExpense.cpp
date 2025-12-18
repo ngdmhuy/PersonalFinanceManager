@@ -77,18 +77,10 @@ void NavigationController::HandleAddExpense() {
     }
     view.PrintTableSeparator(widths, 3);
 
-    view.MoveToXY(5, 6 + (int)wallets->Count());
-    std::cout << "Select index (1-" << wallets->Count() << "): ";
-    int walletIdx;
-    std::cin >> walletIdx;
-    std::cin.ignore();
-
-    if (walletIdx < 1 || walletIdx > static_cast<int>(wallets->Count())) {
-        view.ShowError("Invalid wallet selection.");
-        PauseWithMessage("Press any key to continue...");
-        return;
-    }
-
+    // Select wallet using robust integer input
+    view.MoveToXY(5, 9 + (int)wallets->Count());
+    int walletIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(wallets->Count())) + "): ", 1, static_cast<int>(wallets->Count()), 5, 9 + static_cast<int>(wallets->Count()));
+    if (walletIdx == 0) { view.ShowInfo("Selection cancelled."); PauseWithMessage("Press any key to continue..."); return; }
     Wallet* selectedWallet = wallets->Get(walletIdx - 1);
     std::string walletId = selectedWallet->GetId();
 
@@ -131,18 +123,10 @@ void NavigationController::HandleAddExpense() {
     }
     view.PrintTableSeparator(catWidths, 3);
 
-    view.MoveToXY(5, 6 + (int)categories->Count());
-    std::cout << "Select index (1-" << categories->Count() << "): ";
-    int catIdx;
-    std::cin >> catIdx;
-    std::cin.ignore();
-
-    if (catIdx < 1 || catIdx > static_cast<int>(categories->Count())) {
-        view.ShowError("Invalid category selection.");
-        PauseWithMessage("Press any key to continue...");
-        return;
-    }
-
+    // Select category using robust integer input
+    view.MoveToXY(5, 9 + (int)categories->Count());
+    int catIdx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(categories->Count())) + "): ", 1, static_cast<int>(categories->Count()), 5, 9 + static_cast<int>(categories->Count()));
+    if (catIdx == 0) { view.ShowInfo("Selection cancelled."); PauseWithMessage("Press any key to continue..."); return; }
     Category* selectedCategory = categories->Get(catIdx - 1);
     std::string categoryId = selectedCategory->GetId();
 
@@ -262,19 +246,9 @@ void NavigationController::HandleEditExpense() {
 
     view.PrintTableSeparator(widths, 3);
 
-    view.MoveToXY(5, 6 + (int)expenses->Count());
-    std::cout << "Select index (1-" << expenses->Count() << "): ";
-    int idx = 0;
-    std::cin >> idx;
-    std::cin.ignore();
-
-    if (idx < 1 || idx > static_cast<int>(expenses->Count())) {
-        view.ShowError("Invalid selection.");
-        delete expenses;
-        PauseWithMessage("Press any key to return...");
-        return;
-    }
-
+    view.MoveToXY(5, 9 + (int)expenses->Count());
+    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(expenses->Count())) + "): ", 1, static_cast<int>(expenses->Count()), 5, 9 + static_cast<int>(expenses->Count()));
+    if (idx == 0) { view.ShowInfo("Selection cancelled."); delete expenses; PauseWithMessage("Press any key to return..."); return; }
     Transaction* target = expenses->Get(idx - 1);
 
     // Show current values
@@ -340,22 +314,12 @@ void NavigationController::HandleDeleteExpense() {
 
     view.PrintTableSeparator(widths, 3);
 
-    view.MoveToXY(5, 6 + (int)expenses->Count());
-    std::cout << "Select index (1-" << expenses->Count() << "): ";
-    int idx = 0;
-    std::cin >> idx;
-    std::cin.ignore();
-
-    if (idx < 1 || idx > static_cast<int>(expenses->Count())) {
-        view.ShowError("Invalid selection.");
-        delete expenses;
-        PauseWithMessage("Press any key to return...");
-        return;
-    }
-
+    view.MoveToXY(5, 9 + (int)expenses->Count());
+    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(expenses->Count())) + "): ", 1, static_cast<int>(expenses->Count()), 5, 9 + static_cast<int>(expenses->Count()));
+    if (idx == 0) { view.ShowInfo("Selection cancelled."); delete expenses; PauseWithMessage("Press any key to return..."); return; }
     Transaction* target = expenses->Get(idx - 1);
 
-    view.MoveToXY(5, 8 + (int)expenses->Count());
+    view.MoveToXY(5, 11 + (int)expenses->Count());
     std::cout << "Are you sure you want to delete this expense? (Y/N): ";
     int ch = GetKeyPress();
     std::cout << std::endl;
