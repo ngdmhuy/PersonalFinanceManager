@@ -24,7 +24,6 @@ NavigationController::~NavigationController() {}
 
 void NavigationController::Init() {
     if (appController) {
-        appController->LoadData();
         view.ShowInfo("Data loaded.");
     }
 }
@@ -79,7 +78,6 @@ void NavigationController::Run() {
 
 void NavigationController::Shutdown() {
     if (appController) {
-        appController->SaveData();
         view.ShowInfo("Data saved. Exiting...");
     }
 }
