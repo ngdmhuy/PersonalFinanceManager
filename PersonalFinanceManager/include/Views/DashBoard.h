@@ -6,10 +6,12 @@
 
 // FORWARD DECLARATION
 class Wallet;
+class AppController;
 
 class Dashboard {
 private:
     ConsoleView view;
+    AppController* appController = nullptr; // Pointer to app controller for live data
 
 public:
     /// @brief Displays main dashboard with total balance and wallet list
@@ -17,6 +19,9 @@ public:
 
     /// @brief Show main menu options 
     void ShowMainMenu();
+
+    /// @brief Bind Dashboard to the AppController so it can read live data
+    void SetAppController(AppController* app) { this->appController = app; }
 };
 
 #endif // !Dashboard_h

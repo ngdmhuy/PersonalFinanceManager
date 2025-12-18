@@ -2,31 +2,72 @@
 #include "Views/Menus.h"
 #include "Utils/PlatformUtils.h"
 #include "Models/Wallet.h"
-
-using namespace std;
+#include "Models/Transaction.h"
+#include "Controllers/AppController.h"
+ 
 
 void Dashboard::Display() {
     view.ClearScreen();
     view.PrintHeader("PERSONAL FINANCE MANAGER - DASHBOARD");
 
-    // Display total balance
-    double totalBalance = 0.0; // This would be calculated from wallets in a real app
+    // Prefer live in-memory data from AppController if bound
+    ArrayList<Wallet*>* wallets = nullptr;
+    ArrayList<Transaction*>* transactions = nullptr;
+
+    if (appController) {
+        wallets = appController->GetWalletsList();
+        transactions = appController->GetTransactions();
+    }
+
+    // Compute total balance using AppController if available
+    double totalBalance = (appController) ? appController->GetTotalBalance() : 0.0;
+
     view.MoveToXY(5, 5);
     if (totalBalance < 0) view.SetColor(12); // Red color for negative balance
     else view.SetColor(10); // Green color for positive balance
 
-    std::cout << "Total Balance: " << view.FormatCurrency(totalBalance) << std::endl;
+    std::cout << "Total Balance: " << view.FormatCurrency(static_cast<long>(totalBalance)) << std::endl;
     view.ResetColor();
 
-    // Display wallet list (mock data for demonstration)
-    string headers[] = {"Wallet Name", "Balance", "Transactions"};
+    // Show helpful messages based on in-memory lists
+    if (!appController) {
+        view.ShowInfo("Dashboard not bound to AppController. Data may be out of date.");
+    } else if (!wallets || wallets->Count() == 0) {
+        view.ShowInfo("No wallets found. Create a wallet from Wallet Menu.");
+    }
+
+    if (appController && (!transactions || transactions->Count() == 0)) {
+        view.ShowInfo("No transactions recorded yet.");
+    }
+
+    // Display wallet list
+    std::string headers[] = {"Wallet Name", "Balance", "Transactions"};
     int widths[] = {25, 25, 15};
     int numCols = 3;
-    string data1[] = {"A","250000","12"};
-    string data2[] = {"B","2120000000","3"};
+
     view.PrintTableHeader(headers, widths, numCols);
-    view.PrintTableRow(data1, widths, numCols);
-    view.PrintTableRow(data2, widths, numCols);
+    if (!appController || !wallets || wallets->Count() == 0) {
+        std::string row[] = {"No wallets found", "", ""};
+        view.PrintTableRow(row, widths, numCols);
+    } else {
+        for (size_t i = 0; i < wallets->Count(); ++i) {
+            Wallet* w = wallets->Get(i);
+            // Count transactions for this wallet
+            int txCount = 0;
+            if (transactions) {
+                for (size_t j = 0; j < transactions->Count(); ++j) {
+                    Transaction* t = transactions->Get(j);
+                    if (t->GetWalletId() == w->GetId()) ++txCount;
+                }
+            }
+
+            std::string name = w->GetName();
+            std::string balance = view.FormatCurrency(static_cast<long>(w->GetBalance()));
+            std::string txs = std::to_string(txCount);
+            std::string row[] = {name, balance, txs};
+            view.PrintTableRow(row, widths, numCols);
+        }
+    }
     view.PrintTableSeparator(widths,numCols);
 
     view.PrintShortcutFooter("[M] Main Menu  [ESC] Exit", "Dashboard READY");
@@ -39,10 +80,10 @@ void Dashboard::Display() {
 }
 
 void Dashboard::ShowMainMenu() {
-    cout << "\n" << Menus::MAIN_MENU_TITLE << "\n";
-    cout << Menus::MAIN_MENU_1 << "\n";
-    cout << Menus::MAIN_MENU_2 << "\n";
-    cout << Menus::MAIN_MENU_3 << "\n";
-    cout << Menus::MAIN_MENU_4 << "\n";
-    cout << Menus::MAIN_MENU_5 << "\n";
+    std::cout << "\n" << Menus::MAIN_MENU_TITLE << "\n";
+    std::cout << Menus::MAIN_MENU_1 << "\n";
+    std::cout << Menus::MAIN_MENU_2 << "\n";
+    std::cout << Menus::MAIN_MENU_3 << "\n";
+    std::cout << Menus::MAIN_MENU_4 << "\n";
+    std::cout << Menus::MAIN_MENU_5 << "\n";
 }
