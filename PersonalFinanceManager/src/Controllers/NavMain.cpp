@@ -22,13 +22,6 @@ NavigationController::NavigationController(AppController* app) : appController(a
 
 NavigationController::~NavigationController() {}
 
-void NavigationController::Init() {
-    if (appController) {
-        appController->LoadData();
-        view.ShowInfo("Data loaded.");
-    }
-}
-
 void NavigationController::Run() {
     running = true;
 
@@ -44,17 +37,11 @@ void NavigationController::Run() {
             view.ShowError("Invalid selection!!");
             PauseWithMessage("Press any key to continue...   ");
         }
-        // Keep showing the Main Menu until user chooses to return to Dashboard (d/D) or exit (ESC)
+        // Keep showing the Main Menu until user chooses to return to Dashboard (ESC)
         while (running) {
             char choice = menus.DisplayMainMenu();
 
-            if (choice == 27) { // ESC => exit app
-                running = false;
-                break;
-            }
-
-            if (choice == 'd' || choice == 'D') {
-                // Explicit request to return to Dashboard
+            if (choice == 27) { // ESC => Dashboard
                 break;
             }
 
@@ -72,18 +59,7 @@ void NavigationController::Run() {
                     PauseWithMessage("Press any key to continue...                 ");
                     break;
             }
-
-            // After handling a valid action, loop continues and the main menu is shown again.
         }
-    }
-
-    Shutdown();
-}
-
-void NavigationController::Shutdown() {
-    if (appController) {
-        appController->SaveData();
-        view.ShowInfo("Data saved. Exiting...");
     }
 }
 

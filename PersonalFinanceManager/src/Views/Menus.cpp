@@ -24,7 +24,7 @@ char Menus::DisplayMainMenu() {
     view.MoveToXY(10, 10);
     cout << MAIN_MENU_5 << endl;
 
-    view.PrintShortcutFooter("[1-5] Select | [D] Dashboard | [ESC] Exit", "Main Menu");
+    view.PrintShortcutFooter("[1-5] Select | [ESC] Dashboard", "Main Menu");
     
     // CROSS-PLATFORM FIX
     return GetKeyPress();

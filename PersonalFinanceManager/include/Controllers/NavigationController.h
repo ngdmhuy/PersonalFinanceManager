@@ -17,14 +17,8 @@ public:
     NavigationController(AppController* app);
     ~NavigationController();
 
-    // Initialize controller (load data, setup)
-    void Init();
-
     // Start main navigation loop (blocks until exit)
     void Run();
-
-    // Save and cleanup
-    void Shutdown();
 
 private:
     AppController* appController;
