@@ -11,6 +11,10 @@ private:
     // dynamic elements like the footer directly below content.
     int cursorY = 0;
 
+    // Tracks the maximum content width printed on the screen since last clear.
+    // Used to adapt header/footer width to match tables. Defaults to 80.
+    int contentWidth = 80;
+
 public:
     // Color constants for consistent UI theming - Windows Console
     static const int COLOR_SUCCESS = 10;      /// Light Green for success messages
@@ -19,14 +23,6 @@ public:
     static const int COLOR_INFO = 11;         /// Light Cyan for info/status
     static const int COLOR_NORMAL = 7;        /// White for normal text
     static const int COLOR_HEADER = 9;        /// Light Blue for headers/titles
-
-    // Tracks the current cursor row (y) after each print so we can place
-    // dynamic elements like the footer directly below content.
-    int cursorY = 0;
-
-    // Tracks the maximum content width printed on the screen since last clear.
-    // Used to adapt header/footer width to match tables. Defaults to 80.
-    int contentWidth = 80;
 
     // ===== CONSOLE CONTROL FUNCTIONS =====
     
