@@ -53,6 +53,7 @@ void NavigationController::Run() {
                 case '3':
                 case '4':
                 case '5':
+                case '6':
                     HandleMainMenuChoice(choice);
                     break;
                 default:
@@ -79,6 +80,9 @@ void NavigationController::HandleMainMenuChoice(char c) {
             ShowWalletFlow();
             break;
         case '5':
+            ShowRecurringFlow();
+            break;
+        case '6':
             running = false;
             break;
         default:

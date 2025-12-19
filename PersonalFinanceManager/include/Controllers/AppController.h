@@ -96,6 +96,10 @@ public:
     
     // 6. AUTOMATION & REPORTING
     void AddRecurringTransaction(Frequency freq, Date startDate, Date endDate, std::string walletId, std::string categoryId, double amount, TransactionType type, std::string desc);
+    ArrayList<RecurringTransaction*>* GetRecurringList() const { return recurringTransactions; }
+    RecurringTransaction* GetRecurringById(const std::string& id);
+    bool DeleteRecurringTransaction(const std::string& id);
+    void EditRecurringTransaction(const std::string& id, Frequency freq, Date startDate, Date endDate, std::string walletId, std::string categoryId, double amount, TransactionType type, std::string desc);
 
     // --- FILTERS & STATISTICS ---
     ArrayList<Transaction*>* GetTransactionsByDateRange(Date start, Date end);

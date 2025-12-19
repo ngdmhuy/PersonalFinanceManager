@@ -11,7 +11,7 @@ Menus::Menus() {}
 char Menus::DisplayMainMenu() {
     view.ClearScreen();
     view.PrintHeader(MAIN_MENU_TITLE);
-    view.PrintBox(8,5,35,7);
+    view.PrintBox(8,5,35,8);
 
     view.MoveToXY(10, 6);
     cout << MAIN_MENU_1 << endl;
@@ -23,8 +23,10 @@ char Menus::DisplayMainMenu() {
     cout << MAIN_MENU_4 << endl;
     view.MoveToXY(10, 10);
     cout << MAIN_MENU_5 << endl;
+    view.MoveToXY(10, 11);
+    cout << MAIN_MENU_6 << endl;
 
-    view.PrintShortcutFooter("[1-5] Select | [ESC] Dashboard", "Main Menu");
+    view.PrintShortcutFooter("[1-6] Select | [ESC] Dashboard", "Main Menu");
     
     // CROSS-PLATFORM FIX
     return GetKeyPress();
@@ -150,6 +152,25 @@ char Menus::DisplaySourceMenu() {
     return GetKeyPress();
 }
 
+// RECURRING MENU IMPLEMENTATION
+char Menus::DisplayRecurringMenu() {
+    view.ClearScreen();
+    view.PrintHeader(RECURRING_MENU_TITLE);
+    view.PrintBox(8,5,40,6);
+
+    view.MoveToXY(10, 6);
+    cout << RECURRING_MENU_1 << endl;
+    view.MoveToXY(10, 7);
+    cout << RECURRING_MENU_2 << endl;
+    view.MoveToXY(10, 8);
+    cout << RECURRING_MENU_3 << endl;
+    view.MoveToXY(10, 9);
+    cout << RECURRING_MENU_4 << endl;
+
+    view.PrintShortcutFooter("[1-4] Select | [ESC] Back", "Recurring Transactions");
+    return GetKeyPress();
+}
+
 //STRING CONSTANTS
 // Main Menu
 const string Menus::MAIN_MENU_TITLE = "PERSONAL FINANCE MANAGER - MAIN MENU";
@@ -157,7 +178,15 @@ const string Menus::MAIN_MENU_1 = "1. Income Management";
 const string Menus::MAIN_MENU_2 = "2. Expense Management";
 const string Menus::MAIN_MENU_3 = "3. View Reports & Statistics";
 const string Menus::MAIN_MENU_4 = "4. Manage Wallets";
-const string Menus::MAIN_MENU_5 = "5. Exit";
+const string Menus::MAIN_MENU_5 = "5. Manage Recurring Transactions";
+const string Menus::MAIN_MENU_6 = "6. Exit";
+
+// Recurring Menu
+const string Menus::RECURRING_MENU_TITLE = "RECURRING TRANSACTIONS";
+const string Menus::RECURRING_MENU_1 = "1. Create Recurring Transaction";
+const string Menus::RECURRING_MENU_2 = "2. View Recurring Transactions";
+const string Menus::RECURRING_MENU_3 = "3. Edit Recurring Transaction";
+const string Menus::RECURRING_MENU_4 = "4. Delete Recurring Transaction"; 
 
 // Expense Menu
 const string Menus::EXPENSE_MENU_TITLE = "EXPENSE MANAGEMENT";

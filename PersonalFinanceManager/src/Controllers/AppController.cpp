@@ -356,7 +356,73 @@ void AppController::AddRecurringTransaction(Frequency freq, Date startDate, Date
     
     RecurringTransaction* rt = new RecurringTransaction(id, freq, startDate, endDate, walletId, categoryId, amount, type, desc);
     recurringTransactions->Add(rt);
+    recurringTransactionsMap->Put(id, rt);
     if (view) view->ShowSuccess("Recurring transaction scheduled.");
+}
+
+RecurringTransaction* AppController::GetRecurringById(const std::string& id) {
+    RecurringTransaction** r = recurringTransactionsMap->Get(id);
+    return (r != nullptr) ? *r : nullptr;
+}
+
+bool AppController::DeleteRecurringTransaction(const std::string& id) {
+    RecurringTransaction* r = GetRecurringById(id);
+    if (r == nullptr) {
+        if (view) view->ShowError("Recurring transaction ID not found: " + id);
+        return false;
+    }
+
+    // Remove from list
+    int foundIndex = -1;
+    for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
+        if (recurringTransactions->Get(i)->GetId() == id) {
+            foundIndex = static_cast<int>(i);
+            break;
+        }
+    }
+    if (foundIndex >= 0) {
+        recurringTransactions->RemoveAt(foundIndex);
+    }
+
+    // Remove from map and delete object
+    recurringTransactionsMap->Remove(id);
+    delete r;
+
+    if (view) view->ShowSuccess("Recurring transaction deleted: " + id);
+    return true;
+}
+
+void AppController::EditRecurringTransaction(const std::string& id, Frequency freq, Date startDate, Date endDate, std::string walletId, std::string categoryId, double amount, TransactionType type, std::string desc) {
+    RecurringTransaction* r = GetRecurringById(id);
+    if (r == nullptr) {
+        if (view) view->ShowError("Recurring transaction ID not found: " + id);
+        return;
+    }
+
+    if (endDate.IsValid() && startDate > endDate) {
+        if (view) view->ShowError("Invalid Date Range: Start > End.");
+        return;
+    }
+
+    if (GetWalletById(walletId) == nullptr) {
+        if (view) view->ShowError("Wallet ID not found.");
+        return;
+    }
+
+    if (amount <= 0) {
+        if (view) view->ShowError("Amount must be positive.");
+        return;
+    }
+
+    r->SetFrequency(freq);
+    r->SetStartDate(startDate);
+    r->SetEndDate(endDate);
+    r->SetWalletId(walletId);
+    r->SetCategoryId(categoryId);
+    r->SetAmount(amount);
+    r->SetDescription(desc);
+
+    if (view) view->ShowSuccess("Recurring transaction updated: " + id);
 }
 
 void AppController::ProcessRecurringTransactions() {

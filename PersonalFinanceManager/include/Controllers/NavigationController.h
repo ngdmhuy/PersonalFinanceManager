@@ -72,6 +72,13 @@ private:
     void HandleIncomeVsExpense();
     void HandleWalletBalanceOverview();
 
+    // Recurring transaction handlers
+    void ShowRecurringFlow();
+    void HandleAddRecurring();
+    void HandleViewRecurring();
+    void HandleEditRecurring();
+    void HandleDeleteRecurring();
+
     // Helper: show message and wait for key
     void PauseWithMessage(const std::string& msg);
 };
