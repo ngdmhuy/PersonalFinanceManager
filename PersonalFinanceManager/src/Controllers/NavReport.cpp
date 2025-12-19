@@ -117,7 +117,7 @@ void NavigationController::HandleMonthlySummary() {
         }
     }
 
-    view.MoveToXY(5,5);
+    view.MoveToXY(0,6);
     view.PrintText("Summary for " + std::to_string(month) + "/" + std::to_string(year));
     view.PrintText("Total Income : " + view.FormatCurrency(static_cast<long>(totalIncome)));
     view.PrintText("Total Expense: " + view.FormatCurrency(static_cast<long>(totalExpense)));
@@ -138,17 +138,18 @@ void NavigationController::HandleMonthlySummary() {
 
         view.PrintText("");
         view.PrintText("Top spending categories:");
-        view.PrintText("Category                            Amount          % of Expense");
+        std::string headers2[] = {"Category", "Amount", "% of Expense"};
+        int widths2[] = {35, 15, 20};
+        view.PrintTableHeader(headers2, widths2, 3);
         for (size_t i = 0; i < totals.Count() && i < 10; ++i) {
             Category* c = appController->GetCategoryById(totals.Get(i).id);
             std::string name = c ? c->GetName() : "Unknown";
             double amt = totals.Get(i).amount;
             int pct = (totalExpense > 0) ? static_cast<int>((amt / totalExpense) * 100.0) : 0;
-            // Align columns using stringstream to preserve console alignment
-            std::ostringstream ss;
-            ss << std::left << std::setw(35) << name << std::setw(15) << view.FormatCurrency(static_cast<long>(amt)) << pct << "%";
-            view.PrintText(ss.str());
+            std::string data[] = {name, view.FormatCurrency(static_cast<long>(amt)), std::to_string(pct) + "%"};
+            view.PrintTableRow(data, widths2, 3);
         }
+        view.PrintTableSeparator(widths2, 3);
     } else {
         view.ShowInfo("No expense categories to display for this month.");
     }
@@ -240,6 +241,7 @@ void NavigationController::HandleIncomeVsExpense() {
     }
     view.MoveToXY(5,5);
     view.PrintText("Total Income: " + view.FormatCurrency(static_cast<long>(income)));
+    view.MoveToXY(5,6);
     view.PrintText("Total Expense: " + view.FormatCurrency(static_cast<long>(expense)));
     PauseWithMessage("Press any key to continue...");
 }

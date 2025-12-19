@@ -50,7 +50,6 @@ void NavigationController::HandleCreateWallet() {
 
     try {
         appController->AddWallet(name, initial);
-        view.ShowSuccess("Wallet created successfully.");
     } catch (const std::exception& e) {
         view.ShowError(std::string("Error creating wallet: ") + e.what());
     }
@@ -122,11 +121,6 @@ void NavigationController::HandleDeleteWallet() {
         return;
     }
 
-    bool ok = appController->DeleteWallet(target->GetId());
-    if (ok) {
-        view.ShowSuccess("Wallet deleted successfully.");
-    } else {
-        view.ShowError("Failed to delete wallet. Check for dependent transactions or recurring setups.");
-    }
+    appController->DeleteWallet(target->GetId());
     PauseWithMessage("Press any key to continue...");
 }

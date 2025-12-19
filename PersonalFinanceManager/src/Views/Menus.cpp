@@ -11,7 +11,7 @@ Menus::Menus() {}
 char Menus::DisplayMainMenu() {
     view.ClearScreen();
     view.PrintHeader(MAIN_MENU_TITLE);
-    view.PrintBox(8,5,31,7);
+    view.PrintBox(8,5,35,7);
 
     view.MoveToXY(10, 6);
     cout << MAIN_MENU_1 << endl;
@@ -116,7 +116,7 @@ char Menus::DisplayReportsMenu() {
 char Menus::DisplayCategoryMenu() {
     view.ClearScreen();
     view.PrintHeader(CATEGORY_MENU_TITLE);
-    view.PrintBox(8,5,40,6);
+    view.PrintBox(8,5,30,6);
 
     view.MoveToXY(10, 6);
     cout << CATEGORY_MENU_1 << endl;
@@ -135,7 +135,7 @@ char Menus::DisplayCategoryMenu() {
 char Menus::DisplaySourceMenu() {
     view.ClearScreen();
     view.PrintHeader(SOURCE_MENU_TITLE);
-    view.PrintBox(8,5,40,6);
+    view.PrintBox(8,5,30,6);
 
     view.MoveToXY(10, 6);
     cout << SOURCE_MENU_1 << endl;

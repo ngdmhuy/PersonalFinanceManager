@@ -140,7 +140,6 @@ void NavigationController::HandleAddExpense() {
         view.ClearScreen();
         view.PrintHeader("EXPENSE ADDED SUCCESSFULLY");
         view.MoveToXY(5, 5);
-        view.ShowSuccess("Expense recorded!!");
         
         view.MoveToXY(5, 7);
         view.PrintText("Wallet: " + selectedWallet->GetName());
@@ -267,8 +266,7 @@ void NavigationController::HandleEditExpense() {
     std::string newDesc = InputValidator::GetValidString("Enter new description: ");
 
     bool ok = appController->EditTransaction(target->GetId(), newAmount, newDate, newDesc);
-    if (ok) view.ShowSuccess("Expense updated successfully.");
-    else view.ShowError("Failed to update expense. Check logs.");
+    (void)ok; // AppController emits feedback; avoid duplicate messages.
 
     delete expenses;
     PauseWithMessage("Press any key to return...");
@@ -334,9 +332,7 @@ void NavigationController::HandleDeleteExpense() {
         return;
     }
 
-    bool ok = appController->DeleteTransaction(target->GetId());
-    if (ok) view.ShowSuccess("Expense deleted successfully.");
-    else view.ShowError("Failed to delete expense. Check for issues.");
+    appController->DeleteTransaction(target->GetId());
 
     delete expenses;
     PauseWithMessage("Press any key to return...");
@@ -437,7 +433,6 @@ void NavigationController::HandleDeleteCategory() {
     view.PrintText("");
     if (ch != 'y' && ch != 'Y') { view.ShowInfo("Deletion cancelled."); PauseWithMessage("Press any key to continue..."); return; }
 
-    bool ok = appController->DeleteCategory(target->GetId());
-    if (ok) view.ShowSuccess("Category deleted."); else view.ShowError("Failed to delete category.");
+    appController->DeleteCategory(target->GetId());
     PauseWithMessage("Press any key to continue...");
 }

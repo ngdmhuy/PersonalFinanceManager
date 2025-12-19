@@ -139,7 +139,6 @@ void NavigationController::HandleAddIncome() {
         view.ClearScreen();
         view.PrintHeader("INCOME ADDED SUCCESSFULLY");
         view.MoveToXY(5, 5);
-        view.ShowSuccess("Income recorded!");
         
         view.MoveToXY(5, 7);
         view.PrintText("Wallet: " + selectedWallet->GetName());
@@ -266,10 +265,9 @@ void NavigationController::HandleEditIncome() {
     Date newDate = InputValidator::GetValidDate("Enter new date (YYYY-MM-DD): ");
     std::string newDesc = InputValidator::GetValidString("Enter new description: ");
 
-    bool ok = appController->EditTransaction(target->GetId(), newAmount, newDate, newDesc);
-    if (ok) view.ShowSuccess("Income updated successfully.");
-    else view.ShowError("Failed to update income.");
+    appController->EditTransaction(target->GetId(), newAmount, newDate, newDesc);
 
+    delete incomes;
     PauseWithMessage("Press any key to continue...");
 }
 
@@ -332,10 +330,8 @@ void NavigationController::HandleDeleteIncome() {
         return;
     }
 
-    bool ok = appController->DeleteTransaction(target->GetId());
-    if (ok) view.ShowSuccess("Income deleted successfully.");
-    else view.ShowError("Failed to delete income.");
-
+    appController->DeleteTransaction(target->GetId());
+    delete incomes;
     PauseWithMessage("Press any key to continue...");
 }
 
@@ -434,7 +430,6 @@ void NavigationController::HandleDeleteSource() {
     view.PrintText("");
     if (ch != 'y' && ch != 'Y') { view.ShowInfo("Deletion cancelled."); PauseWithMessage("Press any key to continue..."); return; }
 
-    bool ok = appController->DeleteIncomeSource(target->GetId());
-    if (ok) view.ShowSuccess("Source deleted."); else view.ShowError("Failed to delete source.");
+    appController->DeleteIncomeSource(target->GetId());
     PauseWithMessage("Press any key to continue...");
 }

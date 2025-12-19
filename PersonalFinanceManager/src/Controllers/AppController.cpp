@@ -175,7 +175,7 @@ void AppController::AddWallet(const std::string& name, double initialBalance) {
     walletsMap->Put(newId, newWallet);
     walletsList->Add(newWallet);
     
-    if (view) view->ShowSuccess("Wallet created: " + name + " (ID: " + newId + ")");
+    if (view) view->ShowSuccess("Wallet created: " + name);
 }
 
 Wallet* AppController::GetWalletById(const std::string& id) {
@@ -210,6 +210,8 @@ void AppController::AddCategory(const std::string& name) {
     Category* obj = new Category(id, name);
     categoriesMap->Put(id, obj);
     categoriesList->Add(obj);
+
+    if (view) view->ShowSuccess("Category created.: " + name);
 }
 
 Category* AppController::GetCategoryById(const std::string& id) {
@@ -232,6 +234,8 @@ void AppController::AddIncomeSource(const std::string& name) {
     IncomeSource* obj = new IncomeSource(id, name);
     incomeSourcesMap->Put(id, obj);
     incomeSourcesList->Add(obj);
+
+    if (view) view->ShowSuccess("Income Source created: " + name);
 }
 
 IncomeSource* AppController::GetIncomeSourceById(const std::string& id) {
@@ -548,7 +552,10 @@ bool AppController::DeleteIncomeSource(const std::string& id) {
     }
 
     IncomeSource* s = GetIncomeSourceById(id);
-    if (!s) return false;
+    if (!s) {
+        if (view) view->ShowError("Source ID not found.");
+        return false;
+    }
 
     incomeSourcesMap->Remove(id);
     
