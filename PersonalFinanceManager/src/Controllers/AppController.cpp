@@ -47,6 +47,43 @@ static bool IsStringEmptyOrWhitespace(const std::string& str) {
     return str.find_first_not_of(' ') == std::string::npos;
 }
 
+// --- [HELPER] Indexing Logic ---
+
+void AppController::AddTransactionToIndex(Transaction* t) {
+    // 1. Index by Wallet
+    std::string wId = t->GetWalletId();
+    if (!walletIndex->ContainsKey(wId)) {
+        walletIndex->Put(wId, new ArrayList<Transaction*>());
+    }
+    // HashMap::Get trả về con trỏ cấp 2 (V**), cần dereference (*) để lấy List*
+    (*walletIndex->Get(wId))->Add(t);
+
+    // 2. Index by Category (Only for Expense)
+    if (t->GetType() == TransactionType::Expense) {
+        std::string cId = t->GetCategoryId();
+        if (!categoryIndex->ContainsKey(cId)) {
+            categoryIndex->Put(cId, new ArrayList<Transaction*>());
+        }
+        (*categoryIndex->Get(cId))->Add(t);
+    }
+}
+
+void AppController::RemoveTransactionFromIndex(Transaction* t) {
+    // 1. Remove from Wallet Index
+    std::string wId = t->GetWalletId();
+    if (walletIndex->ContainsKey(wId)) {
+        (*walletIndex->Get(wId))->Remove(t);
+    }
+
+    // 2. Remove from Category Index
+    if (t->GetType() == TransactionType::Expense) {
+        std::string cId = t->GetCategoryId();
+        if (categoryIndex->ContainsKey(cId)) {
+            (*categoryIndex->Get(cId))->Remove(t);
+        }
+    }
+}
+
 template <typename T>
 static void FreeList(ArrayList<T*>*& list) {
     if (list) {
@@ -101,11 +138,20 @@ AppController::AppController(ConsoleView* v) : view(v) {
     this->transactionsMap = new HashMap<std::string, Transaction*>();
     this->recurringTransactionsMap = new HashMap<std::string, RecurringTransaction*>();
 
-    // 3. Load existing data from binary files
+    // 3. Load existing data
     LoadData();
 
-    // 4. Run automation checks (Generate recurring items if due)
+    // 4. Automation checks
     ProcessRecurringTransactions();
+
+    // --- [NEW] Initialize Indices ---
+    this->walletIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
+    this->categoryIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
+
+    // Rebuild indices from loaded data
+    for (size_t i = 0; i < transactions->Count(); ++i) {
+        AddTransactionToIndex(transactions->Get(i));
+    }
 }
 
 AppController::~AppController() {
@@ -297,6 +343,7 @@ void AppController::AddTransaction(double amount, std::string walletId, std::str
     }
 
     transactions->Add(newTrans);
+    AddTransactionToIndex(newTrans); // <--- Update Index
     transactionsMap->Put(transId, newTrans);
     
     if (view) view->ShowSuccess("Transaction added. New Wallet Balance: " + std::to_string(static_cast<long>(wallet->GetBalance())));
@@ -331,6 +378,7 @@ bool AppController::DeleteTransaction(const std::string& transactionId) {
         if (view) view->ShowWarning("Linked Wallet not found. Balance not restored.");
     }
 
+    RemoveTransactionFromIndex(target); // <--- Update Index
     transactions->RemoveAt(foundIndex);
     transactionsMap->Remove(transactionId);
     delete target;
@@ -730,33 +778,21 @@ bool AppController::EditTransaction(const std::string& id, double newAmount, Dat
 // =================================================================================
 
 ArrayList<Transaction*>* AppController::GetTransactionsByWallet(const std::string& walletId) {
-    ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
-    
-    if (GetWalletById(walletId) == nullptr) {
-        std::cout << "[Warning] Filter failed: Wallet ID not found.\n";
-        return result;
+    // --- [OPTIMIZED] Use HashMap Index ---
+    if (walletIndex->ContainsKey(walletId)) {
+        // Return the cached list directly!
+        return *walletIndex->Get(walletId);
     }
-
-    for (size_t i = 0; i < transactions->Count(); ++i) {
-        Transaction* t = transactions->Get(i);
-        if (t->GetWalletId() == walletId) {
-            result->Add(t);
-        }
-    }
-    return result;
+    // Return empty list if not found
+    return new ArrayList<Transaction*>(); 
 }
 
 ArrayList<Transaction*>* AppController::GetTransactionsByCategory(const std::string& categoryId) {
-    ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
-
-    for (size_t i = 0; i < transactions->Count(); ++i) {
-        Transaction* t = transactions->Get(i);
-        // Only Expenses have Categories
-        if (t->GetType() == TransactionType::Expense && t->GetCategoryId() == categoryId) {
-            result->Add(t);
-        }
+    // --- [OPTIMIZED] Use HashMap Index ---
+    if (categoryIndex->ContainsKey(categoryId)) {
+        return *categoryIndex->Get(categoryId);
     }
-    return result;
+    return new ArrayList<Transaction*>();
 }
 
 ArrayList<Transaction*>* AppController::SearchTransactions(const std::string& keyword) {

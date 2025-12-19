@@ -43,6 +43,17 @@ private:
     ArrayList<Category*>* categoriesList;
     ArrayList<IncomeSource*>* incomeSourcesList;
 
+    // --- [OPTIMIZATION] Indexing (Cache transaction lists by ID) ---
+    // Key: WalletID -> Value: List of Transactions in that wallet
+    HashMap<std::string, ArrayList<Transaction*>*>* walletIndex;
+    
+    // Key: CategoryID -> Value: List of Transactions in that category
+    HashMap<std::string, ArrayList<Transaction*>*>* categoryIndex;
+
+    // Helper functions to keep indices in sync
+    void AddTransactionToIndex(Transaction* t);
+    void RemoveTransactionFromIndex(Transaction* t);
+    
     /**
      * @brief Internal check to generate automatic transactions.
      * Called automatically during initialization.
