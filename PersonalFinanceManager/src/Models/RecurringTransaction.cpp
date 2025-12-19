@@ -12,7 +12,7 @@
 #include "Utils/BinaryFileHelper.h"
 #include <sstream>
 #include <iomanip>
-#include <ctime>
+#include <ctime> // Quan trọng cho logic thời gian
 
 // ==========================================
 // 1. CONSTRUCTORS
@@ -59,9 +59,26 @@ void RecurringTransaction::SetAmount(double a) { amount = a; }
 void RecurringTransaction::SetDescription(const std::string& d) { description = d; }
 
 // ==========================================
-// 4. AUTOMATION LOGIC (NÂNG CẤP)
+// 4. AUTOMATION LOGIC
 // ==========================================
 
+// --- ĐÂY LÀ HÀM BẠN ĐANG BỊ THIẾU HOẶC LỖI ---
+Transaction* RecurringTransaction::GenerateTransaction(std::string newTransId, const Date& dateToCreate) {
+    Transaction* t = nullptr;
+    std::string recurringDesc = description + " (Auto)";
+    
+    // Factory Logic
+    if (type == TransactionType::Income)
+        t = new Income(newTransId, walletId, categoryID, amount, dateToCreate, recurringDesc);
+    else
+        t = new Expense(newTransId, walletId, categoryID, amount, dateToCreate, recurringDesc);
+    
+    // Update state so we don't generate this again immediately
+    lastGeneratedDate = dateToCreate;
+    return t;
+}
+
+// --- LOGIC MỚI CỦA MINH HUY ---
 bool RecurringTransaction::ShouldGenerate(const Date& currentDate) {
     // 1. Check End Date
     if (endDate.IsValid() && currentDate > endDate) return false;
@@ -72,51 +89,33 @@ bool RecurringTransaction::ShouldGenerate(const Date& currentDate) {
     // 3. First time run? -> Luôn chạy nếu chưa chạy lần nào
     if (!lastGeneratedDate.IsValid()) return true;
     
-    // 4. CHECK FREQUENCY LOGIC (Dựa trên Enums.h)
-    // Tính toán "Ngày đến hạn tiếp theo" (Next Due Date) dựa trên lần chạy cuối
-    
+    // 4. CHECK FREQUENCY LOGIC
     int lastD = lastGeneratedDate.GetDay();
     int lastM = lastGeneratedDate.GetMonth();
     int lastY = lastGeneratedDate.GetYear();
     
-    Date nextDueDate; // Ngày lẽ ra phải chạy tiếp theo
+    Date nextDueDate; 
 
     switch (frequency) {
         case Frequency::Daily:
-            // Đơn giản là ngày hôm sau
-            // Logic sơ bộ: Chỉ cần currentDate > lastGeneratedDate là đủ cho Daily
             return lastGeneratedDate < currentDate;
 
         case Frequency::Weekly:
-            // Cần ít nhất 7 ngày trôi qua
-            // Vì class Date chưa có hàm cộng trừ ngày phức tạp, ta dùng logic so sánh đơn giản:
-            // Nếu khoảng cách giữa 2 ngày < 7 thì False.
-            // Tuy nhiên, để chính xác tuyệt đối cần đổi ra số ngày (Julian Day).
-            // Ở mức độ đồ án này, ta có thể chấp nhận việc check ngày đơn giản hoặc 
-            // tốt nhất là implement logic cộng ngày:
-            
-            // Cách đơn giản: Chỉ chạy nếu current Date >= lastGeneratedDate + 7 ngày
-            // (Phần này cần logic Date math, tạm thời dùng logic check cơ bản bên dưới)
+            // Fallback bên dưới
             break; 
 
         case Frequency::Monthly:
-            // Next Due = Ngày đó của tháng sau
-            // Ví dụ: Last = 15/01/2025 -> Next = 15/02/2025
             if (lastM == 12) {
                 nextDueDate = Date(lastD, 1, lastY + 1);
             } else {
-                // Xử lý ngày cuối tháng (VD: 31/01 -> 28/02)
                 int nextM = lastM + 1;
                 int maxDayNextMonth = Date::DaysInMonth(nextM, lastY);
                 int nextD = (lastD > maxDayNextMonth) ? maxDayNextMonth : lastD;
                 nextDueDate = Date(nextD, nextM, lastY);
             }
-            // Nếu hôm nay đã là (hoặc vượt qua) ngày đến hạn -> Chạy
             return currentDate >= nextDueDate;
 
         case Frequency::Yearly:
-            // Next Due = Ngày đó của năm sau
-            // Xử lý 29/02 năm nhuận -> 28/02 năm thường
             if (lastD == 29 && lastM == 2 && !Date::IsLeapYear(lastY + 1)) {
                 nextDueDate = Date(28, 2, lastY + 1);
             } else {
@@ -128,15 +127,7 @@ bool RecurringTransaction::ShouldGenerate(const Date& currentDate) {
             return false;
     }
 
-    // Fallback cho Weekly (Logic tạm thời nếu chưa có Date Math xịn)
     if (frequency == Frequency::Weekly) {
-        // Đây là một cách check tương đối cho Weekly mà không cần đổi ra số ngày:
-        // Nếu khác năm hoặc khác tháng -> Chắc chắn đã qua 1 tuần (trừ phi cuối tháng)
-        // Đây là điểm khó nhất nếu Date.h không hỗ trợ cộng trừ ngày.
-        // Gợi ý: Bạn nên thêm hàm AddDays vào Date.h hoặc dùng thư viện time.h
-        
-        // GIẢI PHÁP AN TOÀN NHẤT VỚI CODE HIỆN TẠI:
-        // Ta dùng time_t của hệ thống để so sánh khoảng cách 7 ngày (604800 giây)
         struct tm lastTm = {0};
         lastTm.tm_year = lastY - 1900;
         lastTm.tm_mon = lastM - 1;
@@ -151,7 +142,6 @@ bool RecurringTransaction::ShouldGenerate(const Date& currentDate) {
         time_t currTime = mktime(&currTm);
         
         double secondsDiff = difftime(currTime, lastTime);
-        // 7 ngày * 24 giờ * 3600 giây = 604800
         return secondsDiff >= 604800; 
     }
 
@@ -178,15 +168,17 @@ std::string RecurringTransaction::ToString() const {
     return ss.str();
 }
 
+// ==========================================
+// 6. SERIALIZATION
+// ==========================================
+
 void RecurringTransaction::ToBinary(std::ofstream& fout) const {
-    // 1. Identity & Schedule
     BinaryFileHelper::WriteString(fout, id);
     BinaryFileHelper::Write<int>(fout, static_cast<int>(frequency));
     BinaryFileHelper::WriteDate(fout, startDate);
     BinaryFileHelper::WriteDate(fout, endDate);
     BinaryFileHelper::WriteDate(fout, lastGeneratedDate);
     
-    // 2.Template Data
     BinaryFileHelper::WriteString(fout, walletId);
     BinaryFileHelper::WriteString(fout, categoryID);
     BinaryFileHelper::Write<double>(fout, amount);
@@ -195,21 +187,18 @@ void RecurringTransaction::ToBinary(std::ofstream& fout) const {
 }
 
 RecurringTransaction* RecurringTransaction::FromBinary(std::ifstream& fin) {
-    // 1. Identity & Schedule
     std::string id = BinaryFileHelper::ReadString(fin);
     Frequency freq = static_cast<Frequency>(BinaryFileHelper::Read<int>(fin));
     Date start = BinaryFileHelper::ReadDate(fin);
     Date end = BinaryFileHelper::ReadDate(fin);
     Date lastGen = BinaryFileHelper::ReadDate(fin);
     
-    // 2. Template Data
     std::string wId = BinaryFileHelper::ReadString(fin);
     std::string catId = BinaryFileHelper::ReadString(fin);
     double amt = BinaryFileHelper::Read<double>(fin);
     TransactionType type = static_cast<TransactionType>(BinaryFileHelper::Read<int>(fin));
     std::string desc = BinaryFileHelper::ReadString(fin);
     
-    // 3. Create Object
     RecurringTransaction* rt = new RecurringTransaction(id, freq, start, end, wId, catId, amt, type, desc);
     rt->SetLastGeneratedDate(lastGen);
     
