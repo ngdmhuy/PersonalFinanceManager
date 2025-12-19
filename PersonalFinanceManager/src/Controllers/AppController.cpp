@@ -211,7 +211,7 @@ void AppController::AddCategory(const std::string& name) {
     categoriesMap->Put(id, obj);
     categoriesList->Add(obj);
 
-    if (view) view->ShowSuccess("Category created.: " + name);
+    if (view) view->ShowSuccess("Category created: " + name);
 }
 
 Category* AppController::GetCategoryById(const std::string& id) {

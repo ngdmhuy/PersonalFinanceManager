@@ -13,6 +13,8 @@
 #include "Models/RecurringTransaction.h"
 
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include "Utils/HashMap.h"
 #include "Views/InputValidator.h"
 
@@ -145,8 +147,10 @@ void NavigationController::HandleMonthlySummary() {
             Category* c = appController->GetCategoryById(totals.Get(i).id);
             std::string name = c ? c->GetName() : "Unknown";
             double amt = totals.Get(i).amount;
-            int pct = (totalExpense > 0) ? static_cast<int>((amt / totalExpense) * 100.0) : 0;
-            std::string data[] = {name, view.FormatCurrency(static_cast<long>(amt)), std::to_string(pct) + "%"};
+            double pct = (totalExpense > 0) ? ((amt / totalExpense) * 100.0) : 0.0;
+            std::ostringstream pctss;
+            pctss << std::fixed << std::setprecision(1) << pct;
+            std::string data[] = {name, view.FormatCurrency(static_cast<long>(amt)), pctss.str() + "%"};
             view.PrintTableRow(data, widths2, 3);
         }
         view.PrintTableSeparator(widths2, 3);
@@ -162,8 +166,8 @@ void NavigationController::HandleSpendingByCategory() {
     view.ClearScreen();
     view.PrintHeader("SPENDING BY CATEGORY");
 
-    Date start = InputValidator::GetValidDate("Enter start date (YYYY-MM-DD): ");
-    Date end = InputValidator::GetValidDate("Enter end date (YYYY-MM-DD): ");
+    Date start = InputValidator::GetValidDate("Enter start date (YYYY-MM-DD) or 'T' for today: ");
+    Date end = InputValidator::GetValidDate("Enter end date (YYYY-MM-DD) or 'T' for today: ");
 
     if (end < start) {
         view.ShowError("End date must be after or equal to start date.");
@@ -217,7 +221,10 @@ void NavigationController::HandleSpendingByCategory() {
     for (size_t i = 0; i < totals.Count(); ++i) {
         Category* c = appController->GetCategoryById(totals.Get(i).id);
         std::string name = (c != nullptr) ? c->GetName() : std::string("Unknown");
-        std::string data[] = {name, view.FormatCurrency(static_cast<long>(totals.Get(i).amount)), std::to_string(static_cast<int>((totals.Get(i).amount / totalExpense) * 100)) + "%"};
+        double pctVal = (totalExpense > 0) ? ((totals.Get(i).amount / totalExpense) * 100.0) : 0.0;
+        std::ostringstream pctss;
+        pctss << std::fixed << std::setprecision(1) << pctVal;
+        std::string data[] = {name, view.FormatCurrency(static_cast<long>(totals.Get(i).amount)), pctss.str() + "%"};
         view.PrintTableRow(data, widths, 3);
     }
 
@@ -262,7 +269,10 @@ void NavigationController::HandleWalletBalanceOverview() {
     for (size_t i = 0; i < wallets->Count(); ++i) {
         Wallet* w = wallets->Get(i);
         double bal = w->GetBalance();
-        std::string pct = total != 0 ? std::to_string(static_cast<int>((bal / total) * 100)) + "%" : "0%";
+        double pctd = (total != 0) ? (bal / total) * 100.0 : 0.0;
+        std::ostringstream pctss;
+        pctss << std::fixed << std::setprecision(1) << pctd;
+        std::string pct = pctss.str() + "%";
         std::string data[] = {w->GetName(), view.FormatCurrency(static_cast<long>(bal)), pct};
         view.PrintTableRow(data, widths, 3);
     }

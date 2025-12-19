@@ -45,7 +45,8 @@ void NavigationController::ShowWalletFlow() {
 void NavigationController::HandleCreateWallet() {
     view.ClearScreen();
     view.PrintHeader("CREATE WALLET");
-    std::string name = InputValidator::GetValidString("Enter wallet name: ");
+    std::string name = InputValidator::GetValidString("Enter wallet name (0 to cancel): ");
+    if (name == "0") {view.ShowInfo("Wallet creation cancelled."); PauseWithMessage("Press any key to continue..."); return;}
     double initial = InputValidator::GetValidMoney("Enter initial balance: ");
 
     try {
@@ -105,7 +106,7 @@ void NavigationController::HandleDeleteWallet() {
     }
     view.PrintTableSeparator(widths, 3);
 
-    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(wallets->Count())) + ") (0 to quit): ", 1, static_cast<int>(wallets->Count()), 5, 9 + static_cast<int>(wallets->Count()));
+    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(wallets->Count())) + ") (0 to cancel): ", 1, static_cast<int>(wallets->Count()), 5, 9 + static_cast<int>(wallets->Count()));
     if (idx == 0) { view.ShowInfo("Selection cancelled."); PauseWithMessage("Press any key to continue..."); return; }
 
     Wallet* target = wallets->Get(idx - 1);
