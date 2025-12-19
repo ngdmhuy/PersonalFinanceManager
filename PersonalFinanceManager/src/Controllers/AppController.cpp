@@ -37,6 +37,11 @@ const std::string FILE_RECURRING = "data/recurring.bin";
 // STATIC HELPER FUNCTIONS
 // ==========================================
 
+// Comparator function for sorting Transactions by Date (Ascending)
+static bool CompareTransactionsByDate(Transaction* const& a, Transaction* const& b) {
+    return a->GetDate() < b->GetDate();
+}
+
 // Checks if a string is null, empty, or whitespace only
 static bool IsStringEmptyOrWhitespace(const std::string& str) {
     return str.find_first_not_of(' ') == std::string::npos;
@@ -127,6 +132,10 @@ AppController::~AppController() {
 // ==========================================
 
 void AppController::SaveData() {
+    // --- [UPDATE] Sort before saving ---
+    // Sort transactions by date so next load is already sorted
+    transactions->Sort(CompareTransactionsByDate);
+
     SaveTable(FILE_CATEGORIES, categoriesList);
     SaveTable(FILE_SOURCES, incomeSourcesList);
     SaveTable(FILE_WALLETS, walletsList);
@@ -464,12 +473,23 @@ void AppController::ProcessRecurringTransactions() {
     }
 }
 
+// --- [UPDATE] Optimized Date Range Filter ---
 ArrayList<Transaction*>* AppController::GetTransactionsByDateRange(Date start, Date end) {
     ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
 
+    // 1. Sort before searching (Essential for optimization)
+    transactions->Sort(CompareTransactionsByDate);
+
     for (size_t i = 0; i < transactions->Count(); ++i) {
         Transaction* t = transactions->Get(i);
-        if (t->GetDate() >= start && t->GetDate() <= end) {
+        
+        // 2. Early Exit: If current date > end date, no need to check further
+        if (t->GetDate() > end) {
+            break; 
+        }
+
+        // 3. Add to result if >= start
+        if (t->GetDate() >= start) {
             result->Add(t);
         }
     }
