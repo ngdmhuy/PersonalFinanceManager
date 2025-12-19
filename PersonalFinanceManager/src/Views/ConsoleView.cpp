@@ -19,8 +19,9 @@ void ConsoleView::SetColor(int color) {
 
 void ConsoleView::ClearScreen() {
     ::ClearScreen();
-    // Reset internal cursor tracking to top-left
+    // Reset internal cursor tracking to top-left and reset measured width
     cursorY = 0;
+    contentWidth = 80;
 }
 
 void ConsoleView::ResetColor() {
@@ -37,6 +38,8 @@ void ConsoleView::PrintLine(int x, int y, int length, char ch) {
     cout << endl;
     // After printing a full line and newline, update cursor row to the next line
     cursorY = y + 1;
+    // Consider this as content that may be wide
+    if (length > contentWidth) contentWidth = length;
 }
 
 void ConsoleView::PrintBox(int x, int y, int width, int height) {
@@ -61,21 +64,33 @@ void ConsoleView::PrintBox(int x, int y, int width, int height) {
     cout << "+";
 }
 
-void ConsoleView::PrintHeader(string title) {
+void ConsoleView::PrintHeader(string title, int requestedWidth) {
     ClearScreen();
+
+    // Determine final width: prefer requestedWidth > 0, else use measured contentWidth (minimum 80)
+    int width = 0;
+    if (requestedWidth > 0) width = requestedWidth;
+    else width = (contentWidth < 80) ? 80 : contentWidth;
+
+    if (width < 80) width = 80; // ensure minimum
+
+    // Track width
+    if (width > contentWidth) contentWidth = width;
 
     // Top line
     SetColor(COLOR_HEADER);
-    PrintLine(0, 0, 80, '=');
+    PrintLine(0, 0, width, '=');
 
     // Title centered on line 1
-    int startX = (80 - (int)(title.length())) / 2;
+    int startX = (width - (int)(title.length())) / 2;
     if (startX < 0) startX = 0;
     MoveToXY(startX, 1);
     cout << title;
+    // Track potential content width if title is long
+    if ((int)title.length() > contentWidth) contentWidth = (int)title.length();
 
     // Separator line
-    PrintLine(0, 3, 80, '-');
+    PrintLine(0, 3, width, '-');
     ResetColor();
 }
 
@@ -83,13 +98,18 @@ void ConsoleView::PrintFooter(string message) {
     // Place footer at the line directly below content; ensure a minimum
     // separator Y so small content still shows footer in expected place.
     int sepY = (cursorY < 23) ? 23 : cursorY;
-    PrintLine(0, sepY, 80, '-');
+    // Separator width based on content
+    int sepWidth = (contentWidth < 80) ? 80 : contentWidth;
+    PrintLine(0, sepY, sepWidth, '-');
 
     // Footer text
     MoveToXY(1, sepY + 1);
     SetColor(COLOR_INFO);
     cout << message;
     ResetColor();
+
+    // Track message width
+    if ((int)message.length() + 1 > contentWidth) contentWidth = (int)message.length() + 1;
 
     // Move cursor out of footer
     cursorY = sepY + 2;
@@ -98,7 +118,8 @@ void ConsoleView::PrintFooter(string message) {
 
 void ConsoleView::PrintShortcutFooter(string shortcuts, string status) {
     int sepY = (cursorY < 23) ? 23 : cursorY;
-    PrintLine(0, sepY, 80, '-');
+    int sepWidth = (contentWidth < 80) ? 80 : contentWidth;
+    PrintLine(0, sepY, sepWidth, '-');
 
     // Left part: shortcuts
     MoveToXY(1, sepY + 1);
@@ -106,13 +127,17 @@ void ConsoleView::PrintShortcutFooter(string shortcuts, string status) {
     cout << shortcuts;
 
     // Right part: status (right-aligned)
-    int statusX = 80 - (int)(status.length()) - 1;
+    int statusX = sepWidth - (int)(status.length()) - 1;
     if (statusX < (int)(shortcuts.length()) + 2) {
         statusX = (int)(shortcuts.length()) + 2;
     }
     MoveToXY(statusX, sepY + 1);
     SetColor(COLOR_INFO);
     cout << status;
+
+    // Track widths
+    if ((int)shortcuts.length() + 1 > contentWidth) contentWidth = (int)shortcuts.length() + 1;
+    if ((int)status.length() + 1 > contentWidth) contentWidth = (int)status.length() + 1;
 
     ResetColor();
     cursorY = sepY + 2;
@@ -123,36 +148,49 @@ void ConsoleView::PrintShortcutFooter(string shortcuts, string status) {
 
 void ConsoleView::ShowSuccess(string message) {
     SetColor(COLOR_SUCCESS);
-    cout << "[OK] " << message << endl;
+    std::string out = std::string("[OK] ") + message;
+    cout << out << endl;
     ResetColor();
     // Update cursor tracking since we emitted a newline
     cursorY++;
+    if ((int)out.length() > contentWidth) contentWidth = (int)out.length();
 }
 
 void ConsoleView::ShowError(string message) {
     SetColor(COLOR_ERROR);
-    cout << "[ERR] " << message << endl;
+    std::string out = std::string("[ERR] ") + message;
+    cout << out << endl;
     ResetColor();
     cursorY++;
+    if ((int)out.length() > contentWidth) contentWidth = (int)out.length();
 }
 
 void ConsoleView::ShowWarning(string message) {
     SetColor(COLOR_WARNING);
-    cout << "[WARN] " << message << endl;
+    std::string out = std::string("[WARN] ") + message;
+    cout << out << endl;
     ResetColor();
     cursorY++;
+    if ((int)out.length() > contentWidth) contentWidth = (int)out.length();
 }
 
 void ConsoleView::ShowInfo(string message) {
     SetColor(COLOR_INFO);
-    cout << "[INFO] " << message << endl;
+    std::string out = std::string("[INFO] ") + message;
+    cout << out << endl;
     ResetColor();
     cursorY++;
+    if ((int)out.length() > contentWidth) contentWidth = (int)out.length();
 }
 
 //TABLE IMPLEMENTATIONS
 
 void ConsoleView::PrintTableHeader(string columns[], int colWidths[], int numCols) {
+    // Compute table width: 1 (initial '+') + sum(colWidths) + numCols (for separators)
+    int tableWidth = 1;
+    for (int i = 0; i < numCols; ++i) tableWidth += colWidths[i] + 1;
+    if (tableWidth > contentWidth) contentWidth = tableWidth;
+
     // Print header line at current cursor row
     int y = cursorY;
     MoveToXY(0, y);
@@ -177,6 +215,11 @@ void ConsoleView::PrintTableHeader(string columns[], int colWidths[], int numCol
 }
 
 void ConsoleView::PrintTableRow(const string data[], const int colWidths[], int numCols) {
+    // Compute table width same as header
+    int tableWidth = 1;
+    for (int i = 0; i < numCols; ++i) tableWidth += colWidths[i] + 1;
+    if (tableWidth > contentWidth) contentWidth = tableWidth;
+
     // Print row at current cursor row
     int y = cursorY;
     MoveToXY(0, y);
@@ -190,6 +233,11 @@ void ConsoleView::PrintTableRow(const string data[], const int colWidths[], int 
 }
 
 void ConsoleView::PrintTableSeparator(const int colWidths[], int numCols) {
+    // Compute table width and track
+    int tableWidth = 1;
+    for (int i = 0; i < numCols; ++i) tableWidth += colWidths[i] + 1;
+    if (tableWidth > contentWidth) contentWidth = tableWidth;
+
     int y = cursorY;
     MoveToXY(0, y);
     cout << "+";
@@ -203,6 +251,8 @@ void ConsoleView::PrintTableSeparator(const int colWidths[], int numCols) {
 
 void ConsoleView::PrintText(const string &text) {
     cout << text << endl;
+    // Track printed width
+    if ((int)text.length() > contentWidth) contentWidth = (int)text.length();
     // Advance internal cursor tracking because we emitted a newline
     cursorY++;
 }

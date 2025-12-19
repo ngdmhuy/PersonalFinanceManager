@@ -56,22 +56,25 @@ void NavigationController::HandleAddIncome() {
         return;
     }
 
-    view.ClearScreen();
-    view.PrintHeader("ADD INCOME");
-
     // Step 1: Select Wallet
     ArrayList<Wallet*>* wallets = appController->GetWalletsList();
     if (!wallets || wallets->Count() == 0) {
+        view.ClearScreen();
+        view.PrintHeader("ADD INCOME");
         view.ShowError("No wallets available. Please create a wallet first.");
         PauseWithMessage("Press any key to continue...");
         return;
     }
 
-    view.MoveToXY(5, 4);
-    view.PrintText("Available Wallets:");
-    
+    // Precompute table width so header/footer match
     std::string headers[] = {"Index", "Wallet Name", "Balance"};
     int widths[] = {10, 30, 20};
+
+    view.ClearScreen();
+    view.PrintHeader("ADD INCOME");
+
+    view.MoveToXY(5, 4);
+    view.PrintText("Available Wallets:");
     view.PrintTableHeader(headers, widths, 3);
 
     for (size_t i = 0; i < wallets->Count(); ++i) {
@@ -110,13 +113,15 @@ void NavigationController::HandleAddIncome() {
         return;
     }
 
+    std::string srcHeaders[] = {"Index", "Source Name"};
+    int srcWidths[] = {10, 40};
+    int srcTableWidth = 1; for (int i = 0; i < 2; ++i) srcTableWidth += srcWidths[i] + 1;
+
     view.ClearScreen();
-    view.PrintHeader("ADD INCOME - SOURCE");
+    view.PrintHeader("ADD INCOME - SOURCE", srcTableWidth);
     view.MoveToXY(5, 4);
     view.PrintText("Available Income Sources:");
 
-    std::string srcHeaders[] = {"Index", "Source Name"};
-    int srcWidths[] = {10, 40};
     view.PrintTableHeader(srcHeaders, srcWidths, 2);
 
     for (size_t i = 0; i < sources->Count(); ++i) {
@@ -160,7 +165,7 @@ void NavigationController::HandleAddIncome() {
 
 void NavigationController::HandleViewIncome() {
     view.ClearScreen();
-    view.PrintHeader("VIEW INCOME");
+    view.PrintHeader("VIEW INCOME", 6 + 18 + 20 + 15 + 12 + 30 + 6);
 
     ArrayList<Transaction*>* txs = appController->GetTransactions();
     if (!txs || txs->Count() == 0) {
@@ -209,7 +214,7 @@ void NavigationController::HandleEditIncome() {
     }
 
     view.ClearScreen();
-    view.PrintHeader("EDIT INCOME");
+    view.PrintHeader("EDIT INCOME", 6 + 18 + 20 + 15 + 12 + 30 + 6);
 
     ArrayList<Transaction*>* txs = appController->GetTransactions();
     if (!txs || txs->Count() == 0) {
@@ -279,7 +284,7 @@ void NavigationController::HandleDeleteIncome() {
     }
 
     view.ClearScreen();
-    view.PrintHeader("DELETE INCOME");
+    view.PrintHeader("DELETE INCOME", 6 + 18 + 20 + 15 + 12 + 30 + 6);
 
     ArrayList<Transaction*>* txs = appController->GetTransactions();
     if (!txs || txs->Count() == 0) {

@@ -19,7 +19,15 @@ public:
     static const int COLOR_INFO = 11;         /// Light Cyan for info/status
     static const int COLOR_NORMAL = 7;        /// White for normal text
     static const int COLOR_HEADER = 9;        /// Light Blue for headers/titles
-    
+
+    // Tracks the current cursor row (y) after each print so we can place
+    // dynamic elements like the footer directly below content.
+    int cursorY = 0;
+
+    // Tracks the maximum content width printed on the screen since last clear.
+    // Used to adapt header/footer width to match tables. Defaults to 80.
+    int contentWidth = 80;
+
     // ===== CONSOLE CONTROL FUNCTIONS =====
     
     /// @brief Moves console cursor to specified position (x, y)
@@ -55,7 +63,8 @@ public:
 
     /// @brief Prints centered header with colored background at top of screen
     /// @param title Text content to display as header (max 40 chars recommended)
-    void PrintHeader(std::string title);
+    /// @param width Optional width to use for header/separator (if 0, uses measured content width or 80)
+    void PrintHeader(std::string title, int width = 0);
 
     /// @brief Prints footer message positioned directly below the last printed content
     ///        (minimum separator row is 23 to preserve compact layouts).

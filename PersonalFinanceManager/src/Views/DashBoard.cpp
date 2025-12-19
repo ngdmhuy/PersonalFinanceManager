@@ -7,8 +7,13 @@
  
 
 char Dashboard::Display() {
+    // Precompute table width for wallet list so header/footer match
+    int dashboardTableWidths[] = {25, 25, 15};
+    int dashboardNumCols = 3;
+    int dashboardTableWidth = 1; for (int i = 0; i < dashboardNumCols; ++i) dashboardTableWidth += dashboardTableWidths[i] + 1;
+
     view.ClearScreen();
-    view.PrintHeader("PERSONAL FINANCE MANAGER - DASHBOARD");
+    view.PrintHeader("PERSONAL FINANCE MANAGER - DASHBOARD", dashboardTableWidth);
 
     // Prefer live in-memory data from AppController if bound
     ArrayList<Wallet*>* wallets = nullptr;

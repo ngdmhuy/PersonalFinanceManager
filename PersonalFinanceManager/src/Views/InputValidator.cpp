@@ -58,6 +58,43 @@ Date InputValidator::GetValidDate(const string& prompt) {
     }
 }
 
+// Returns an invalid Date (Date::IsValid() == false) if the user submits a blank line.
+Date InputValidator::GetOptionalDate(const string& prompt) {
+    string dateStr;
+    while (true) {
+        cout << prompt;
+        if (!std::getline(cin, dateStr)) return Date(); // EOF -> treat as no date
+
+        // Trim whitespace
+        size_t start = dateStr.find_first_not_of(" \t\r\n");
+        if (start == std::string::npos) {
+            // Blank means no date (optional)
+            return Date();
+        }
+        size_t end = dateStr.find_last_not_of(" \t\r\n");
+        std::string token = dateStr.substr(start, end - start + 1);
+
+        // Accept 'T', 't', or 'today' (case-insensitive) as today's date
+        std::string lower = token;
+        for (char &ch : lower) ch = (char)std::tolower(ch);
+        if (lower == "t" || lower == "today") {
+            return Date::GetTodayDate();
+        }
+
+        try {
+            Date date = Date::FromString(token);
+            if (date.IsValid()) {
+                return date;
+            }
+        } catch (...) {
+            // Invalid date format
+        }
+
+        ConsoleView view;
+        view.ShowError("Invalid date! Please enter date in format YYYY-MM-DD (or 'T' for today), or leave blank for none.");
+    }
+}
+
 string InputValidator::GetValidString(const string& prompt) {
     string input;
     while (true) {

@@ -11,7 +11,7 @@ Menus::Menus() {}
 char Menus::DisplayMainMenu() {
     view.ClearScreen();
     view.PrintHeader(MAIN_MENU_TITLE);
-    view.PrintBox(8,5,35,7);
+    view.PrintBox(8,5,35,8);
 
     view.MoveToXY(10, 6);
     cout << MAIN_MENU_1 << endl;
