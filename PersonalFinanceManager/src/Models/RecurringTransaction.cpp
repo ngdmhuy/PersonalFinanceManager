@@ -10,6 +10,8 @@
 #include "Models/Expense.h"
 #include "Models/RecurringTransaction.h"
 #include "Utils/BinaryFileHelper.h"
+#include <sstream>
+#include <iomanip>
 
 // ==========================================
 // 1. CONSTRUCTORS
@@ -97,9 +99,11 @@ bool RecurringTransaction::ShouldGenerate(const Date& currentDate) {
 std::string RecurringTransaction::ToString() const {
     std::stringstream ss;
     
-    ss << "[" << EnumHelper::FrequencyToString(frequency) << "] Start: " << startDate;
+    ss << "[" << EnumHelper::FrequencyToString(frequency) << "] Start: " << startDate.ToString();
     if (endDate.IsValid()) ss << " | End: " << endDate.ToString();
     else ss << " | Indefinite";
+    
+    if (lastGeneratedDate.IsValid()) ss << " | Last Generated: " << lastGeneratedDate.ToString();
     
     ss << (type == TransactionType::Income ? " + " : " - ")
        << std::fixed << std::setprecision(2) << amount
