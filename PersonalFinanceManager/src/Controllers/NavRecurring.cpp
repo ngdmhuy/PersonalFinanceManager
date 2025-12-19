@@ -121,7 +121,7 @@ void NavigationController::HandleAddRecurring() {
     // Start / End dates
     view.ClearScreen(); view.PrintHeader("SET DATES");
     Date start = InputValidator::GetValidDate("Enter start date (YYYY-MM-DD) or 'T' for today: ");
-    Date end = InputValidator::GetValidDate("Enter optional end date (YYYY-MM-DD) or 'T' for today (leave blank for no end): ");
+    Date end = InputValidator::GetOptionalDate("Enter optional end date (YYYY-MM-DD) or 'T' for today (leave blank for no end): ");
 
     // Amount / Description
     view.ClearScreen(); view.PrintHeader("SET AMOUNT & DESCRIPTION");
@@ -134,13 +134,13 @@ void NavigationController::HandleAddRecurring() {
 }
 
 void NavigationController::HandleViewRecurring() {
-    view.ClearScreen(); view.PrintHeader("RECURRING TRANSACTIONS");
+    view.ClearScreen(); view.PrintHeader("RECURRING TRANSACTIONS", 5 + 10 + 12 + 12 + 8 + 12 + 18 + 18 + 20 + 9);
     ArrayList<RecurringTransaction*>* list = appController->GetRecurringList();
     if (!list || list->Count() == 0) { view.ShowInfo("No recurring transactions scheduled."); PauseWithMessage("Press any key to continue..."); return; }
 
-    std::string headers[] = {"Index","ID","Freq","Start","End","Type","Wallet","Category/Source","Amount","Desc"};
-    int widths[] = {6,18,10,12,12,8,15,18,12,20};
-    view.PrintTableHeader(headers, widths, 10);
+    std::string headers[] = {"Idx","Freq","Start","End","Type","Wallet","Category/Source","Amount","Desc"};
+    int widths[] = {5,10,12,12,8,12,18,18,20};
+    view.PrintTableHeader(headers, widths, 9);
     for (size_t i = 0; i < list->Count(); ++i) {
         RecurringTransaction* r = list->Get(i);
         std::string freq = EnumHelper::FrequencyToString(r->GetFrequency());
@@ -156,15 +156,15 @@ void NavigationController::HandleViewRecurring() {
             }
         }
         std::ostringstream amt; amt << view.FormatCurrency(static_cast<long>(r->GetAmount()));
-        std::string data[] = {std::to_string(static_cast<int>(i+1)), r->GetId(), freq, start, end, type, wallet, cat, amt.str(), r->GetDescription()};
-        view.PrintTableRow(data, widths, 10);
+        std::string data[] = {std::to_string(static_cast<int>(i+1)), freq, start, end, type, wallet, cat, amt.str(), r->GetDescription()};
+        view.PrintTableRow(data, widths, 9);
     }
-    view.PrintTableSeparator(widths, 10);
+    view.PrintTableSeparator(widths, 9);
     PauseWithMessage("Press any key to continue...");
 }
 
 void NavigationController::HandleEditRecurring() {
-    view.ClearScreen(); view.PrintHeader("EDIT RECURRING TRANSACTION");
+    view.ClearScreen(); view.PrintHeader("EDIT RECURRING TRANSACTION", 6 + 18 + 40 + 12 + 8 + 5);
     ArrayList<RecurringTransaction*>* list = appController->GetRecurringList();
     if (!list || list->Count() == 0) { view.ShowInfo("No recurring transactions to edit."); PauseWithMessage("Press any key to continue..."); return; }
 
@@ -192,10 +192,10 @@ void NavigationController::HandleEditRecurring() {
 
     view.ClearScreen(); view.PrintHeader("EDIT RECURRING - DATES");
     view.PrintText("Current start: " + sel->GetStartDate().ToString());
-    Date start = InputValidator::GetValidDate("Enter new start date (YYYY-MM-DD) or 'T' for today (leave blank to keep): ");
+    Date start = InputValidator::GetOptionalDate("Enter new start date (YYYY-MM-DD) or 'T' for today (leave blank to keep): ");
     if (!start.IsValid()) start = sel->GetStartDate();
     view.PrintText("Current end: " + (sel->GetEndDate().IsValid() ? sel->GetEndDate().ToString() : std::string("(none)")));
-    Date end = InputValidator::GetValidDate("Enter new end date (YYYY-MM-DD) or 'T' for today (leave blank to keep): ");
+    Date end = InputValidator::GetOptionalDate("Enter new end date (YYYY-MM-DD) or 'T' for today (leave blank to keep): ");
     if (!end.IsValid()) end = sel->GetEndDate();
 
     view.ClearScreen(); view.PrintHeader("EDIT RECURRING - AMOUNT/DESC");
@@ -205,7 +205,7 @@ void NavigationController::HandleEditRecurring() {
 
     // Read optional description line (allow empty to keep)
     std::string descInput;
-    std::cout << "Enter new description (leave blank to keep): ";
+    std::cout << "Enter new description: ";
     std::getline(std::cin, descInput);
     // Trim
     size_t s = descInput.find_first_not_of(" \t\r\n");
@@ -221,7 +221,7 @@ void NavigationController::HandleEditRecurring() {
 }
 
 void NavigationController::HandleDeleteRecurring() {
-    view.ClearScreen(); view.PrintHeader("DELETE RECURRING TRANSACTION");
+    view.ClearScreen(); view.PrintHeader("DELETE RECURRING TRANSACTION", 6 + 18 + 40+ 12 + 8 + 5);
     ArrayList<RecurringTransaction*>* list = appController->GetRecurringList();
     if (!list || list->Count() == 0) { view.ShowInfo("No recurring transactions to delete."); PauseWithMessage("Press any key to continue..."); return; }
 
