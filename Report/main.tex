@@ -1,0 +1,64 @@
+\documentclass[12pt]{article}
+
+\usepackage{hcmus-report-template}
+
+% Disable indentation on new paragraphs
+\setlength{\parindent}{0pt}
+
+% Line spacing 1.5
+\renewcommand{\baselinestretch}{1.5}
+
+% Optional: graphic path
+% \graphicspath{PATH_TO_GRAPHIC_FOLDER}
+
+% To use Times font family, uncomment this row
+% \usepackage{mathptmx}
+
+% To use roman section / subsection, uncomment these rows
+% \renewcommand{\thesection}{\Roman{section}}
+% \renewcommand{\thesubsection}{\thesection.\Roman{subsection}}
+
+% Define course name, report name and report title.
+\newcommand{\coursename}{Introduction to Computer Science - CS160}
+\newcommand{\reportname}{Personal Finance Manager}
+\newcommand{\reporttitle}{Final Project}
+
+\newcommand{\studentname}{Nguyễn Đình Minh Huy (25125083) \\ Lê Trần Hoàng Long (251250xx) \\ Trần Đức Toàn (251250xx)}
+\newcommand{\teachername}{}
+
+% Header
+\lhead{\reporttitle}
+\rhead{
+University of Science - VNUHCM\\
+\coursename
+}
+
+% Footer
+\newcommand{\leftfooter}{\LaTeX\ by \href{https://github.com/ndmhuy}{Huy, Nguyen Dinh Minh}}
+\lfoot{\leftfooter}
+
+% ============ DOCUMENT ============
+\begin{document}
+\renewcommand{\proofname}{Proof}
+\pagenumbering{roman}
+\input{content/title.tex}
+\input{content/assignment}
+\tableofcontents
+\pagebreak
+% \listoftables
+% \pagebreak
+% \listoffigures
+% \pagebreak
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% \input{content/cite}
+
+% References
+ \input{ref/ref.tex}
+
+ % Appendix
+\appendix
+ % Add \cleardoublepage to move appendices to next page.
+\end{document}
