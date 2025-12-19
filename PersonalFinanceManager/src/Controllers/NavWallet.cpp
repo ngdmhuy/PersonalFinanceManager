@@ -113,7 +113,8 @@ void NavigationController::HandleDeleteWallet() {
     view.MoveToXY(5, 11 + (int)wallets->Count());
     std::cout << "Are you sure you want to delete wallet '" << target->GetName() << "'? (Y/N): ";
     int ch = GetKeyPress();
-    std::cout << std::endl;
+    // Emit newline and update internal cursor tracking
+    view.PrintText("");
 
     if (ch != 'y' && ch != 'Y') {
         view.ShowInfo("Deletion cancelled.");

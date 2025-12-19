@@ -7,8 +7,11 @@ using namespace std;
 //CONSOLE CONTROL IMPLEMENTATIONS
 
 void ConsoleView::MoveToXY(int x, int y) {
+    // Update internal cursor tracking when moving cursor
+    cursorY = y;
     MoveCursor(x, y);
 }
+
 
 void ConsoleView::SetColor(int color) {
     SetConsoleColor(color);
@@ -16,6 +19,8 @@ void ConsoleView::SetColor(int color) {
 
 void ConsoleView::ClearScreen() {
     ::ClearScreen();
+    // Reset internal cursor tracking to top-left
+    cursorY = 0;
 }
 
 void ConsoleView::ResetColor() {
@@ -30,6 +35,8 @@ void ConsoleView::PrintLine(int x, int y, int length, char ch) {
         cout << ch;
     }
     cout << endl;
+    // After printing a full line and newline, update cursor row to the next line
+    cursorY = y + 1;
 }
 
 void ConsoleView::PrintBox(int x, int y, int width, int height) {
@@ -73,27 +80,28 @@ void ConsoleView::PrintHeader(string title) {
 }
 
 void ConsoleView::PrintFooter(string message) {
-    // Separator
-    MoveToXY(0, 23);
-    PrintLine(0, 23, 80, '-');
+    // Place footer at the line directly below content; ensure a minimum
+    // separator Y so small content still shows footer in expected place.
+    int sepY = (cursorY < 23) ? 23 : cursorY;
+    PrintLine(0, sepY, 80, '-');
 
     // Footer text
-    MoveToXY(1, 24);
+    MoveToXY(1, sepY + 1);
     SetColor(COLOR_INFO);
     cout << message;
     ResetColor();
 
     // Move cursor out of footer
-    MoveToXY(0, 25);
+    cursorY = sepY + 2;
+    MoveToXY(0, cursorY);
 }
 
 void ConsoleView::PrintShortcutFooter(string shortcuts, string status) {
-    // Separator
-    MoveToXY(0, 23);
-    PrintLine(0, 23, 80, '-');
+    int sepY = (cursorY < 23) ? 23 : cursorY;
+    PrintLine(0, sepY, 80, '-');
 
     // Left part: shortcuts
-    MoveToXY(1, 24);
+    MoveToXY(1, sepY + 1);
     SetColor(COLOR_WARNING);
     cout << shortcuts;
 
@@ -102,12 +110,13 @@ void ConsoleView::PrintShortcutFooter(string shortcuts, string status) {
     if (statusX < (int)(shortcuts.length()) + 2) {
         statusX = (int)(shortcuts.length()) + 2;
     }
-    MoveToXY(statusX, 24);
+    MoveToXY(statusX, sepY + 1);
     SetColor(COLOR_INFO);
     cout << status;
 
     ResetColor();
-    MoveToXY(0, 25);
+    cursorY = sepY + 2;
+    MoveToXY(0, cursorY);
 }
 
 //MESSAGE IMPLEMENTATIONS
@@ -116,61 +125,86 @@ void ConsoleView::ShowSuccess(string message) {
     SetColor(COLOR_SUCCESS);
     cout << "[OK] " << message << endl;
     ResetColor();
+    // Update cursor tracking since we emitted a newline
+    cursorY++;
 }
 
 void ConsoleView::ShowError(string message) {
     SetColor(COLOR_ERROR);
     cout << "[ERR] " << message << endl;
     ResetColor();
+    cursorY++;
 }
 
 void ConsoleView::ShowWarning(string message) {
     SetColor(COLOR_WARNING);
     cout << "[WARN] " << message << endl;
     ResetColor();
+    cursorY++;
 }
 
 void ConsoleView::ShowInfo(string message) {
     SetColor(COLOR_INFO);
     cout << "[INFO] " << message << endl;
     ResetColor();
+    cursorY++;
 }
 
 //TABLE IMPLEMENTATIONS
 
 void ConsoleView::PrintTableHeader(string columns[], int colWidths[], int numCols) {
+    // Print header line at current cursor row
+    int y = cursorY;
+    MoveToXY(0, y);
     cout << "+";
     for (int i = 0; i < numCols; i++) {
         for (int j = 0; j < colWidths[i]; j++) cout << "-";
         cout << "+";
     }
     cout << endl;
+    cursorY = y + 1; y++;
 
+    MoveToXY(0, y);
     cout << "|";
     for (int i = 0; i < numCols; i++) {
         cout << " " << left << setw(colWidths[i] - 1) << columns[i] << "|";
     }
     cout << endl;
+    cursorY = y + 1; y++;
 
+    // Separator after header
     PrintTableSeparator(colWidths,numCols);
 }
 
 void ConsoleView::PrintTableRow(const string data[], const int colWidths[], int numCols) {
+    // Print row at current cursor row
+    int y = cursorY;
+    MoveToXY(0, y);
     cout << "|";
     for (int i = 0; i < numCols; i++) {
         // Left-align all columns and pad to the specified width
         cout << left << setw(colWidths[i]) << data[i] << "|";
     }
     cout << endl;
+    cursorY = y + 1;
 }
 
 void ConsoleView::PrintTableSeparator(const int colWidths[], int numCols) {
+    int y = cursorY;
+    MoveToXY(0, y);
     cout << "+";
     for (int i = 0; i < numCols; i++) {
         for (int j = 0; j < colWidths[i]; j++) cout << "-";
         cout << "+";
     }
     cout << endl;
+    cursorY = y + 1;
+}
+
+void ConsoleView::PrintText(const string &text) {
+    cout << text << endl;
+    // Advance internal cursor tracking because we emitted a newline
+    cursorY++;
 }
 
 string ConsoleView::FormatCurrency(long amount) {

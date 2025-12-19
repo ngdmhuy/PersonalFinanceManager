@@ -26,7 +26,7 @@ char Dashboard::Display() {
     if (totalBalance < 0) view.SetColor(12); // Red color for negative balance
     else view.SetColor(10); // Green color for positive balance
 
-    std::cout << "Total Balance: " << view.FormatCurrency(static_cast<long>(totalBalance)) << std::endl;
+    view.PrintText("Total Balance: " + view.FormatCurrency(static_cast<long>(totalBalance)));
     view.ResetColor();
 
     // Show helpful messages based on in-memory lists

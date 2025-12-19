@@ -118,10 +118,10 @@ void NavigationController::HandleMonthlySummary() {
     }
 
     view.MoveToXY(5,5);
-    std::cout << "Summary for " << month << "/" << year << std::endl;
-    std::cout << "Total Income : " << view.FormatCurrency(static_cast<long>(totalIncome)) << std::endl;
-    std::cout << "Total Expense: " << view.FormatCurrency(static_cast<long>(totalExpense)) << std::endl;
-    std::cout << "Net          : " << view.FormatCurrency(static_cast<long>(totalIncome - totalExpense)) << std::endl;
+    view.PrintText("Summary for " + std::to_string(month) + "/" + std::to_string(year));
+    view.PrintText("Total Income : " + view.FormatCurrency(static_cast<long>(totalIncome)));
+    view.PrintText("Total Expense: " + view.FormatCurrency(static_cast<long>(totalExpense)));
+    view.PrintText("Net          : " + view.FormatCurrency(static_cast<long>(totalIncome - totalExpense)));
 
     if (totalExpense > 0 && expenseMap.Count() > 0) {
         // Convert map to list
@@ -136,14 +136,18 @@ void NavigationController::HandleMonthlySummary() {
         // Sort descending
         totals.Sort(CompareCategoryTotal);
 
-        std::cout << "\nTop spending categories:\n";
-        std::cout << "Category                            Amount          % of Expense" << std::endl;
+        view.PrintText("");
+        view.PrintText("Top spending categories:");
+        view.PrintText("Category                            Amount          % of Expense");
         for (size_t i = 0; i < totals.Count() && i < 10; ++i) {
             Category* c = appController->GetCategoryById(totals.Get(i).id);
             std::string name = c ? c->GetName() : "Unknown";
             double amt = totals.Get(i).amount;
             int pct = (totalExpense > 0) ? static_cast<int>((amt / totalExpense) * 100.0) : 0;
-            std::cout << std::left << std::setw(35) << name << std::setw(15) << view.FormatCurrency(static_cast<long>(amt)) << pct << "%" << std::endl;
+            // Align columns using stringstream to preserve console alignment
+            std::ostringstream ss;
+            ss << std::left << std::setw(35) << name << std::setw(15) << view.FormatCurrency(static_cast<long>(amt)) << pct << "%";
+            view.PrintText(ss.str());
         }
     } else {
         view.ShowInfo("No expense categories to display for this month.");
@@ -235,8 +239,8 @@ void NavigationController::HandleIncomeVsExpense() {
         }
     }
     view.MoveToXY(5,5);
-    std::cout << "Total Income: " << view.FormatCurrency(static_cast<long>(income)) << std::endl;
-    std::cout << "Total Expense: " << view.FormatCurrency(static_cast<long>(expense)) << std::endl;
+    view.PrintText("Total Income: " + view.FormatCurrency(static_cast<long>(income)));
+    view.PrintText("Total Expense: " + view.FormatCurrency(static_cast<long>(expense)));
     PauseWithMessage("Press any key to continue...");
 }
 

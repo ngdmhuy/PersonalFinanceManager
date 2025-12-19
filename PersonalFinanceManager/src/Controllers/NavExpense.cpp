@@ -64,7 +64,7 @@ void NavigationController::HandleAddExpense() {
     }
 
     view.MoveToXY(5, 4);
-    std::cout << "Available Wallets:" << std::endl;
+    view.PrintText("Available Wallets:");
     
     std::string headers[] = {"Index", "Wallet Name", "Balance"};
     int widths[] = {10, 30, 20};
@@ -110,7 +110,7 @@ void NavigationController::HandleAddExpense() {
     view.ClearScreen();
     view.PrintHeader("ADD EXPENSE - CATEGORY");
     view.MoveToXY(5, 4);
-    std::cout << "Available Categories:" << std::endl;
+    view.PrintText("Available Categories:");
 
     std::string catHeaders[] = {"Index", "Category Name", ""};
     int catWidths[] = {10, 40, 20};
@@ -140,15 +140,15 @@ void NavigationController::HandleAddExpense() {
         view.ShowSuccess("Expense recorded!!");
         
         view.MoveToXY(5, 7);
-        std::cout << "Wallet: " << selectedWallet->GetName() << std::endl;
+        view.PrintText("Wallet: " + selectedWallet->GetName());
         view.MoveToXY(5, 8);
-        std::cout << "Amount: " << view.FormatCurrency(static_cast<long>(amount)) << std::endl;
+        view.PrintText("Amount: " + view.FormatCurrency(static_cast<long>(amount)));
         view.MoveToXY(5, 9);
-        std::cout << "Category: " << selectedCategory->GetName() << std::endl;
+        view.PrintText("Category: " + selectedCategory->GetName());
         view.MoveToXY(5, 10);
-        std::cout << "Date: " << date.ToString() << std::endl;
+        view.PrintText("Date: " + date.ToString());
         view.MoveToXY(5, 11);
-        std::cout << "Description: " << description << std::endl;
+        view.PrintText("Description: " + description);
         
         PauseWithMessage("Press any key to return to menu...");
     } catch (const std::exception& e) {
@@ -254,9 +254,9 @@ void NavigationController::HandleEditExpense() {
     // Show current values
     view.ClearScreen();
     view.PrintHeader("EDIT EXPENSE - CURRENT");
-    std::cout << "Current Amount: " << view.FormatCurrency(static_cast<long>(target->GetAmount())) << std::endl;
-    std::cout << "Current Date   : " << target->GetDate().ToString() << std::endl;
-    std::cout << "Current Desc   : " << target->GetDescription() << std::endl;
+    view.PrintText("Current Amount: " + view.FormatCurrency(static_cast<long>(target->GetAmount())));
+    view.PrintText("Current Date   : " + target->GetDate().ToString());
+    view.PrintText("Current Desc   : " + target->GetDescription());
 
     // Get new values
     double newAmount = InputValidator::GetValidMoney("Enter new amount: ");
@@ -322,7 +322,7 @@ void NavigationController::HandleDeleteExpense() {
     view.MoveToXY(5, 11 + (int)expenses->Count());
     std::cout << "Are you sure you want to delete this expense? (Y/N): ";
     int ch = GetKeyPress();
-    std::cout << std::endl;
+    view.PrintText("");
 
     if (ch != 'y' && ch != 'Y') {
         view.ShowInfo("Deletion cancelled.");

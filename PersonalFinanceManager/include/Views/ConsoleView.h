@@ -15,6 +15,10 @@ private:
     static const int COLOR_NORMAL = 7;        /// White for normal text
     static const int COLOR_HEADER = 9;        /// Light Blue for headers/titles
 
+    // Tracks the current cursor row (y) after each print so we can place
+    // dynamic elements like the footer directly below content.
+    int cursorY = 0;
+
 public:
     // ===== CONSOLE CONTROL FUNCTIONS =====
     
@@ -53,11 +57,12 @@ public:
     /// @param title Text content to display as header (max 40 chars recommended)
     void PrintHeader(std::string title);
 
-    /// @brief Prints footer message at bottom of screen (row 24)
+    /// @brief Prints footer message positioned directly below the last printed content
+    ///        (minimum separator row is 23 to preserve compact layouts).
     /// @param message Instructional text or status (max 70 chars recommended)
     void PrintFooter(std::string message);
 
-    /// @brief Prints shortcut footer with keyboard hints and status info
+    /// @brief Prints shortcut footer with keyboard hints and status info placed below content
     /// @param shortcuts Keyboard shortcut instructions (e.g. "[1-5] Select | ESC Exit")
     /// @param status Current application status (e.g. "File saved ✓ | 25 transactions")
     void PrintShortcutFooter(std::string shortcuts, std::string status);
@@ -79,6 +84,11 @@ public:
     /// @brief Displays info message with cyan color and info icon
     /// @param message Informational text (e.g. "Loading data from file...")
     void ShowInfo(std::string message);
+
+    /// @brief Helper to print a single line of text at the current cursor position
+    ///        and advance the internal cursor row by 1. Use instead of raw
+    ///        std::cout << ... << std::endl when printing lines after MoveToXY.
+    void PrintText(const std::string &text);
 
     // ===== TABLE PRINTING FUNCTIONS =====
 
