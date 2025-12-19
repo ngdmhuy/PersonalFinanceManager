@@ -16,6 +16,9 @@ public:
     /// @return Date object if valid, keeps asking until valid input
     static Date GetValidDate(const std::string& prompt);
 
+    /// @brief Prompts user for an optional date, blank returns invalid Date
+    static Date GetOptionalDate(const std::string& prompt);
+
     /// @brief Prompts user for string input and validates it's not empty
     /// @param prompt Message to display to user
     /// @return std::string if valid, keeps asking until valid input

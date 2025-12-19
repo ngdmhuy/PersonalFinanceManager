@@ -167,7 +167,7 @@ void NavigationController::HandleViewExpenses() {
     }
 
     view.ClearScreen();
-    view.PrintHeader("VIEW EXPENSES");
+    view.PrintHeader("VIEW EXPENSES", 6 + 70 + 20 + 3);
 
     ArrayList<Transaction*>* all = appController->GetTransactions();
     ArrayList<Transaction*>* expenses = new ArrayList<Transaction*>();
@@ -213,7 +213,7 @@ void NavigationController::HandleEditExpense() {
     }
 
     view.ClearScreen();
-    view.PrintHeader("EDIT EXPENSE");
+    view.PrintHeader("EDIT EXPENSE", 6 + 70 + 20 + 3);
 
     ArrayList<Transaction*>* all = appController->GetTransactions();
     ArrayList<Transaction*>* expenses = new ArrayList<Transaction*>();
@@ -280,7 +280,7 @@ void NavigationController::HandleDeleteExpense() {
     }
 
     view.ClearScreen();
-    view.PrintHeader("DELETE EXPENSE");
+    view.PrintHeader("DELETE EXPENSE", 6 + 70 + 20 + 3);
 
     ArrayList<Transaction*>* all = appController->GetTransactions();
     ArrayList<Transaction*>* expenses = new ArrayList<Transaction*>();
