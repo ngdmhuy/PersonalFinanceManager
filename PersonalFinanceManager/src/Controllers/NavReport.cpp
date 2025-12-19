@@ -12,11 +12,12 @@
 #include "Models/IncomeSource.h"
 #include "Models/RecurringTransaction.h"
 
+#include "Utils/HashMap.h"
+#include "Views/InputValidator.h"
+
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include "Utils/HashMap.h"
-#include "Views/InputValidator.h"
 
 void NavigationController::ShowReportsFlow() {
     bool inReportsMenu = true;
