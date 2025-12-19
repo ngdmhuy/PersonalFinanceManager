@@ -12,7 +12,7 @@
 #include "Utils/BinaryFileHelper.h"
 #include <sstream>
 #include <iomanip>
-#include <ctime> // Quan trọng cho logic thời gian
+#include <ctime>
 
 // ==========================================
 // 1. CONSTRUCTORS
@@ -66,13 +66,11 @@ Transaction* RecurringTransaction::GenerateTransaction(std::string newTransId, c
     Transaction* t = nullptr;
     std::string recurringDesc = description + " (Auto)";
     
-    // Factory Logic
     if (type == TransactionType::Income)
         t = new Income(newTransId, walletId, categoryID, amount, dateToCreate, recurringDesc);
     else
         t = new Expense(newTransId, walletId, categoryID, amount, dateToCreate, recurringDesc);
     
-    // Update state so we don't generate this again immediately
     lastGeneratedDate = dateToCreate;
     return t;
 }
@@ -84,7 +82,7 @@ bool RecurringTransaction::ShouldGenerate(const Date& currentDate) {
     // 2. Check Start Date
     if (currentDate < startDate) return false;
     
-    // 3. First time run? -> Luôn chạy nếu chưa chạy lần nào
+    // 3. First time run
     if (!lastGeneratedDate.IsValid()) return true;
     
     // 4. CHECK FREQUENCY LOGIC
@@ -92,14 +90,13 @@ bool RecurringTransaction::ShouldGenerate(const Date& currentDate) {
     int lastM = lastGeneratedDate.GetMonth();
     int lastY = lastGeneratedDate.GetYear();
     
-    Date nextDueDate; 
+    Date nextDueDate;
 
     switch (frequency) {
         case Frequency::Daily:
             return lastGeneratedDate < currentDate;
 
         case Frequency::Weekly:
-            // Fallback bên dưới
             break; 
 
         case Frequency::Monthly:
@@ -201,4 +198,4 @@ RecurringTransaction* RecurringTransaction::FromBinary(std::ifstream& fin) {
     rt->SetLastGeneratedDate(lastGen);
     
     return rt;
-}   
+}
