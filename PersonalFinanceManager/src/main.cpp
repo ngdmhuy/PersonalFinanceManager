@@ -1,4 +1,5 @@
 #include <iostream>
+#include <windows.h>
 #include "Controllers/AppController.h"
 #include "Controllers/NavigationController.h"
 #include "Views/ConsoleView.h"
@@ -6,6 +7,7 @@
 
 int main() {
     SetupConsole();
+    SetConsoleOutputCP(CP_UTF8); // No need for Mac/Linux setup as ANSI is default there
     
     try {
         // Initialize console view (centralized UI messaging)

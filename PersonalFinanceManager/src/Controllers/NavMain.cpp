@@ -36,7 +36,7 @@ void NavigationController::Run() {
             }
             if (choice == 'm' || choice == 'M') break;
             view.ShowError("Invalid selection!!");
-            PauseWithMessage("Press any key to continue...   ");
+            PauseWithMessage("Press any key to continue...");
         }
         // Keep showing the Main Menu until user chooses to return to Dashboard (ESC)
         while (running) {
@@ -58,7 +58,7 @@ void NavigationController::Run() {
                     break;
                 default:
                     view.ShowError("Invalid selection. Try again.");
-                    PauseWithMessage("Press any key to continue...                 ");
+                    PauseWithMessage("Press any key to continue...");
                     break;
             }
         }

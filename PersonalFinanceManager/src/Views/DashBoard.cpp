@@ -26,8 +26,14 @@ char Dashboard::Display() {
 
     // Compute total balance using AppController if available
     double totalBalance = (appController) ? appController->GetTotalBalance() : 0.0;
-
+    Date today = Date::GetTodayDate();
+    
     view.MoveToXY(5, 5);
+    view.SetColor(ConsoleView::COLOR_INFO);
+    view.PrintText("Today's Date: " + today.ToString());
+    view.ResetColor();
+    
+    view.MoveToXY(5, 7);
     if (totalBalance < 0) view.SetColor(ConsoleView::COLOR_ERROR); // Red color for negative balance
     else view.SetColor(ConsoleView::COLOR_SUCCESS); // Green color for positive balance
 
