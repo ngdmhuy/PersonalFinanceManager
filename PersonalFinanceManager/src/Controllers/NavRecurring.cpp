@@ -65,7 +65,7 @@ void NavigationController::HandleAddRecurring() {
     view.PrintTableHeader(wheads, wwidths, 3);
     for (size_t i = 0; i < wallets->Count(); ++i) {
         Wallet* w = wallets->Get(i);
-        std::string data[] = {std::to_string(i+1), w->GetName(), view.FormatCurrency((long)w->GetBalance())};
+        std::string data[] = {std::to_string(i+1), w->GetName(), view.FormatCurrency(static_cast<long long>(w->GetBalance()))};
         view.PrintTableRow(data, wwidths, 3);
     }
     view.PrintTableSeparator(wwidths, 3);
@@ -134,7 +134,7 @@ void NavigationController::HandleAddRecurring() {
 }
 
 void NavigationController::HandleViewRecurring() {
-    view.ClearScreen(); view.PrintHeader("RECURRING TRANSACTIONS", 5 + 10 + 12 + 12 + 8 + 12 + 18 + 18 + 20 + 9);
+    view.ClearScreen(); view.PrintHeader("RECURRING TRANSACTIONS", 5 + 10 + 12 + 12 + 8 + 12 + 18 + 18 + 20 + 10);
     ArrayList<RecurringTransaction*>* list = appController->GetRecurringList();
     if (!list || list->Count() == 0) { view.ShowInfo("No recurring transactions scheduled."); PauseWithMessage("Press any key to continue..."); return; }
 
@@ -155,7 +155,7 @@ void NavigationController::HandleViewRecurring() {
                 if (s) cat = s->GetName();
             }
         }
-        std::ostringstream amt; amt << view.FormatCurrency(static_cast<long>(r->GetAmount()));
+        std::ostringstream amt; amt << view.FormatCurrency(static_cast<long long>(r->GetAmount()));
         std::string data[] = {std::to_string(static_cast<int>(i+1)), freq, start, end, type, wallet, cat, amt.str(), r->GetDescription()};
         view.PrintTableRow(data, widths, 9);
     }
@@ -173,7 +173,7 @@ void NavigationController::HandleEditRecurring() {
     view.PrintTableHeader(headers, widths, 5);
     for (size_t i = 0; i < list->Count(); ++i) {
         RecurringTransaction* r = list->Get(i);
-        std::string data[] = {std::to_string(static_cast<int>(i+1)), r->GetId(), r->GetDescription(), view.FormatCurrency(static_cast<long>(r->GetAmount())), EnumHelper::TypeToString(r->GetType())};
+        std::string data[] = {std::to_string(static_cast<int>(i+1)), r->GetId(), r->GetDescription(), view.FormatCurrency(static_cast<long long>(r->GetAmount())), EnumHelper::TypeToString(r->GetType())};
         view.PrintTableRow(data, widths, 5);
     }
     view.PrintTableSeparator(widths, 5);
@@ -199,7 +199,7 @@ void NavigationController::HandleEditRecurring() {
     if (!end.IsValid()) end = sel->GetEndDate();
 
     view.ClearScreen(); view.PrintHeader("EDIT RECURRING - AMOUNT/DESC");
-    view.PrintText("Current amount: " + view.FormatCurrency(static_cast<long>(sel->GetAmount())));
+    view.PrintText("Current amount: " + view.FormatCurrency(static_cast<long long>(sel->GetAmount())));
     double amount = InputValidator::GetValidMoney("Enter new amount (0 to keep): ");
     if (amount <= 0) amount = sel->GetAmount();
 
@@ -221,7 +221,7 @@ void NavigationController::HandleEditRecurring() {
 }
 
 void NavigationController::HandleDeleteRecurring() {
-    view.ClearScreen(); view.PrintHeader("DELETE RECURRING TRANSACTION", 6 + 18 + 40+ 12 + 8 + 5);
+    view.ClearScreen(); view.PrintHeader("DELETE RECURRING TRANSACTION", 6 + 18 + 40+ 12 + 8 + 6);
     ArrayList<RecurringTransaction*>* list = appController->GetRecurringList();
     if (!list || list->Count() == 0) { view.ShowInfo("No recurring transactions to delete."); PauseWithMessage("Press any key to continue..."); return; }
 
@@ -230,7 +230,7 @@ void NavigationController::HandleDeleteRecurring() {
     view.PrintTableHeader(headers, widths, 5);
     for (size_t i = 0; i < list->Count(); ++i) {
         RecurringTransaction* r = list->Get(i);
-        std::string data[] = {std::to_string(static_cast<int>(i+1)), r->GetId(), r->GetDescription(), view.FormatCurrency(static_cast<long>(r->GetAmount())), EnumHelper::TypeToString(r->GetType())};
+        std::string data[] = {std::to_string(static_cast<int>(i+1)), r->GetId(), r->GetDescription(), view.FormatCurrency(static_cast<long long>(r->GetAmount())), EnumHelper::TypeToString(r->GetType())};
         view.PrintTableRow(data, widths, 5);
     }
     view.PrintTableSeparator(widths, 5);

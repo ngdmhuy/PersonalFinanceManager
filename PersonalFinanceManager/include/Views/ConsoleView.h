@@ -116,9 +116,9 @@ public:
     void PrintTableSeparator(const int colWidths[], int numCols);
 
     /// @brief Prints currency value with thousand separators and VND suffix
-    /// @param amount Numeric value to format (long integer)
+    /// @param amount Numeric value to format (64-bit integer)
     /// @return Formatted string (e.g. "50,000,000 VND")
-    std::string FormatCurrency(long amount);
+    std::string FormatCurrency(long long amount);
 };
 
 #endif // !ConsoleView_h

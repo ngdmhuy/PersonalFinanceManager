@@ -72,7 +72,7 @@ void NavigationController::HandleViewWallets() {
     view.PrintTableHeader(headers, widths, 3);
     for (size_t i = 0; i < wallets->Count(); ++i) {
         Wallet* w = wallets->Get(i);
-        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long>(w->GetBalance()))};
+        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long long>(w->GetBalance()))};
         view.PrintTableRow(data, widths, 3);
     }
     view.PrintTableSeparator(widths, 3);
@@ -101,7 +101,7 @@ void NavigationController::HandleDeleteWallet() {
     view.PrintTableHeader(headers, widths, 3);
     for (size_t i = 0; i < wallets->Count(); ++i) {
         Wallet* w = wallets->Get(i);
-        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long>(w->GetBalance()))};
+        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long long>(w->GetBalance()))};
         view.PrintTableRow(data, widths, 3);
     }
     view.PrintTableSeparator(widths, 3);

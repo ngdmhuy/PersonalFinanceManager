@@ -31,7 +31,7 @@ char Dashboard::Display() {
     if (totalBalance < 0) view.SetColor(12); // Red color for negative balance
     else view.SetColor(10); // Green color for positive balance
 
-    view.PrintText("Total Balance: " + view.FormatCurrency(static_cast<long>(totalBalance)));
+    view.PrintText("Total Balance: " + view.FormatCurrency(static_cast<long long>(totalBalance)));
     view.ResetColor();
 
     // Show helpful messages based on in-memory lists
@@ -67,7 +67,7 @@ char Dashboard::Display() {
             }
 
             std::string name = w->GetName();
-            std::string balance = view.FormatCurrency(static_cast<long>(w->GetBalance()));
+            std::string balance = view.FormatCurrency(static_cast<long long>(w->GetBalance()));
             std::string txs = std::to_string(txCount);
             std::string row[] = {name, balance, txs};
             view.PrintTableRow(row, widths, numCols);

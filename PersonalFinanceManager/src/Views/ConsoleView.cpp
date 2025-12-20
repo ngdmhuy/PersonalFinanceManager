@@ -257,7 +257,7 @@ void ConsoleView::PrintText(const string &text) {
     cursorY++;
 }
 
-string ConsoleView::FormatCurrency(long amount) {
+string ConsoleView::FormatCurrency(long long amount) {
     stringstream ss;
     ss << fixed << setprecision(0);
     string numStr = to_string(amount);
@@ -272,4 +272,5 @@ string ConsoleView::FormatCurrency(long amount) {
         }
     }
     return result + " VND";
-}
+} 
+

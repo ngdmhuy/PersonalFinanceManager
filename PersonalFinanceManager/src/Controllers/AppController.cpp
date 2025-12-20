@@ -290,7 +290,7 @@ void AppController::AddTransaction(double amount, std::string walletId, std::str
     transactions->Add(newTrans);
     transactionsMap->Put(transId, newTrans);
     
-    if (view) view->ShowSuccess("Transaction added. New Wallet Balance: " + std::to_string(static_cast<long>(wallet->GetBalance())));
+    if (view) view->ShowSuccess("Transaction added. New Wallet Balance: " + std::to_string(static_cast<long long>(wallet->GetBalance())));
 }
 
 bool AppController::DeleteTransaction(const std::string& transactionId) {
@@ -317,7 +317,7 @@ bool AppController::DeleteTransaction(const std::string& transactionId) {
         } else {
             w->AddAmount(target->GetAmount());
         }
-        if (view) view->ShowInfo("Wallet balance restored. New Balance: " + std::to_string(static_cast<long>(w->GetBalance())));
+        if (view) view->ShowInfo("Wallet balance restored. New Balance: " + std::to_string(static_cast<long long>(w->GetBalance())));
     } else {
         if (view) view->ShowWarning("Linked Wallet not found. Balance not restored.");
     }
@@ -455,7 +455,7 @@ void AppController::ProcessRecurringTransactions() {
 
             rt->SetLastGeneratedDate(today);
             generatedCount++;
-            if (view) view->ShowSuccess("Generated: " + rt->GetDescription() + " (" + std::to_string(static_cast<long>(rt->GetAmount())) + ")");
+            if (view) view->ShowSuccess("Generated: " + rt->GetDescription() + " (" + std::to_string(static_cast<long long>(rt->GetAmount())) + ")");
         }
     }
 

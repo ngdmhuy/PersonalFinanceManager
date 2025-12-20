@@ -79,7 +79,7 @@ void NavigationController::HandleAddIncome() {
 
     for (size_t i = 0; i < wallets->Count(); ++i) {
         Wallet* w = wallets->Get(i);
-        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency((long)(w->GetBalance()))};
+        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long long>(w->GetBalance()))};
         view.PrintTableRow(data, widths, 3);
     }
     view.PrintTableSeparator(widths, 3);
@@ -148,7 +148,7 @@ void NavigationController::HandleAddIncome() {
         view.MoveToXY(5, 7);
         view.PrintText("Wallet: " + selectedWallet->GetName());
         view.MoveToXY(5, 8);
-        view.PrintText("Amount: " + view.FormatCurrency(static_cast<long>(amount)));
+        view.PrintText("Amount: " + view.FormatCurrency(static_cast<long long>(amount)));
         view.MoveToXY(5, 9);
         view.PrintText("Source: " + selectedSource->GetName());
         view.MoveToXY(5, 10);
@@ -165,7 +165,7 @@ void NavigationController::HandleAddIncome() {
 
 void NavigationController::HandleViewIncome() {
     view.ClearScreen();
-    view.PrintHeader("VIEW INCOME", 6 + 18 + 20 + 15 + 12 + 30 + 6);
+    view.PrintHeader("VIEW INCOME", 6 + 18 + 20 + 15 + 12 + 30 + 7);
 
     ArrayList<Transaction*>* txs = appController->GetTransactions();
     if (!txs || txs->Count() == 0) {
@@ -191,7 +191,7 @@ void NavigationController::HandleViewIncome() {
         std::string desc = t->GetDescription();
         if ((int)desc.length() > 28) desc = desc.substr(0, 27) + "~";
 
-        std::string data[] = {std::to_string(count), t->GetId(), walletName, view.FormatCurrency(static_cast<long>(t->GetAmount())), dateStr, desc};
+        std::string data[] = {std::to_string(count), t->GetId(), walletName, view.FormatCurrency(static_cast<long long>(t->GetAmount())), dateStr, desc};
         view.PrintTableRow(data, widths, 6);
     }
 
@@ -244,7 +244,7 @@ void NavigationController::HandleEditIncome() {
         Transaction* t = incomes->Get(i);
         Wallet* w = appController->GetWalletById(t->GetWalletId());
         std::string walletName = w ? w->GetName() : "-";
-        std::string data[] = {std::to_string(i + 1), t->GetId(), walletName, view.FormatCurrency(static_cast<long>(t->GetAmount())), t->GetDate().ToString(), t->GetDescription()};
+        std::string data[] = {std::to_string(i + 1), t->GetId(), walletName, view.FormatCurrency(static_cast<long long>(t->GetAmount())), t->GetDate().ToString(), t->GetDescription()};
         view.PrintTableRow(data, widths, 6);
     }
     view.PrintTableSeparator(widths, 6);
@@ -262,7 +262,7 @@ void NavigationController::HandleEditIncome() {
     view.MoveToXY(5,5);
     view.PrintText("ID: " + target->GetId());
     view.PrintText("Wallet: " + walletName);
-    view.PrintText("Current Amount: " + view.FormatCurrency(static_cast<long>(target->GetAmount())));
+    view.PrintText("Current Amount: " + view.FormatCurrency(static_cast<long long>(target->GetAmount())));
     view.PrintText("Current Date: " + target->GetDate().ToString());
     view.PrintText("Current Description: " + target->GetDescription());
 
@@ -284,7 +284,7 @@ void NavigationController::HandleDeleteIncome() {
     }
 
     view.ClearScreen();
-    view.PrintHeader("DELETE INCOME", 6 + 18 + 20 + 15 + 12 + 30 + 6);
+    view.PrintHeader("DELETE INCOME", 6 + 18 + 20 + 15 + 12 + 30 + 7);
 
     ArrayList<Transaction*>* txs = appController->GetTransactions();
     if (!txs || txs->Count() == 0) {
@@ -314,7 +314,7 @@ void NavigationController::HandleDeleteIncome() {
         Transaction* t = incomes->Get(i);
         Wallet* w = appController->GetWalletById(t->GetWalletId());
         std::string walletName = w ? w->GetName() : "-";
-        std::string data[] = {std::to_string(i + 1), t->GetId(), walletName, view.FormatCurrency(static_cast<long>(t->GetAmount())), t->GetDate().ToString(), t->GetDescription()};
+        std::string data[] = {std::to_string(i + 1), t->GetId(), walletName, view.FormatCurrency(static_cast<long long>(t->GetAmount())), t->GetDate().ToString(), t->GetDescription()};
         view.PrintTableRow(data, widths, 6);
     }
     view.PrintTableSeparator(widths, 6);

@@ -122,9 +122,9 @@ void NavigationController::HandleMonthlySummary() {
 
     view.MoveToXY(0,6);
     view.PrintText("Summary for " + std::to_string(month) + "/" + std::to_string(year));
-    view.PrintText("Total Income : " + view.FormatCurrency(static_cast<long>(totalIncome)));
-    view.PrintText("Total Expense: " + view.FormatCurrency(static_cast<long>(totalExpense)));
-    view.PrintText("Net          : " + view.FormatCurrency(static_cast<long>(totalIncome - totalExpense)));
+    view.PrintText("Total Income : " + view.FormatCurrency(static_cast<long long>(totalIncome)));
+    view.PrintText("Total Expense: " + view.FormatCurrency(static_cast<long long>(totalExpense)));
+    view.PrintText("Net          : " + view.FormatCurrency(static_cast<long long>(totalIncome - totalExpense)));
 
     if (totalExpense > 0 && expenseMap.Count() > 0) {
         // Convert map to list
@@ -151,7 +151,7 @@ void NavigationController::HandleMonthlySummary() {
             double pct = (totalExpense > 0) ? ((amt / totalExpense) * 100.0) : 0.0;
             std::ostringstream pctss;
             pctss << std::fixed << std::setprecision(1) << pct;
-            std::string data[] = {name, view.FormatCurrency(static_cast<long>(amt)), pctss.str() + "%"};
+            std::string data[] = {name, view.FormatCurrency(static_cast<long long>(amt)), pctss.str() + "%"};
             view.PrintTableRow(data, widths2, 3);
         }
         view.PrintTableSeparator(widths2, 3);
@@ -225,7 +225,7 @@ void NavigationController::HandleSpendingByCategory() {
         double pctVal = (totalExpense > 0) ? ((totals.Get(i).amount / totalExpense) * 100.0) : 0.0;
         std::ostringstream pctss;
         pctss << std::fixed << std::setprecision(1) << pctVal;
-        std::string data[] = {name, view.FormatCurrency(static_cast<long>(totals.Get(i).amount)), pctss.str() + "%"};
+        std::string data[] = {name, view.FormatCurrency(static_cast<long long>(totals.Get(i).amount)), pctss.str() + "%"};
         view.PrintTableRow(data, widths, 3);
     }
 
@@ -248,9 +248,9 @@ void NavigationController::HandleIncomeVsExpense() {
         }
     }
     view.MoveToXY(5,5);
-    view.PrintText("Total Income: " + view.FormatCurrency(static_cast<long>(income)));
+    view.PrintText("Total Income: " + view.FormatCurrency(static_cast<long long>(income)));
     view.MoveToXY(5,6);
-    view.PrintText("Total Expense: " + view.FormatCurrency(static_cast<long>(expense)));
+    view.PrintText("Total Expense: " + view.FormatCurrency(static_cast<long long>(expense)));
     PauseWithMessage("Press any key to continue...");
 }
 
@@ -274,7 +274,7 @@ void NavigationController::HandleWalletBalanceOverview() {
         std::ostringstream pctss;
         pctss << std::fixed << std::setprecision(1) << pctd;
         std::string pct = pctss.str() + "%";
-        std::string data[] = {w->GetName(), view.FormatCurrency(static_cast<long>(bal)), pct};
+        std::string data[] = {w->GetName(), view.FormatCurrency(static_cast<long long>(bal)), pct};
         view.PrintTableRow(data, widths, 3);
     }
     view.PrintTableSeparator(widths, 3);

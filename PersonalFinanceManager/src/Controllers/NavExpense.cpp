@@ -75,7 +75,7 @@ void NavigationController::HandleAddExpense() {
 
     for (size_t i = 0; i < wallets->Count(); ++i) {
         Wallet* w = wallets->Get(i);
-        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long>(w->GetBalance()))};
+        std::string data[] = {std::to_string(i + 1), w->GetName(), view.FormatCurrency(static_cast<long long>(w->GetBalance()))};
         view.PrintTableRow(data, widths, 3);
     }
     view.PrintTableSeparator(widths, 3);
@@ -144,7 +144,7 @@ void NavigationController::HandleAddExpense() {
         view.MoveToXY(5, 7);
         view.PrintText("Wallet: " + selectedWallet->GetName());
         view.MoveToXY(5, 8);
-        view.PrintText("Amount: " + view.FormatCurrency(static_cast<long>(amount)));
+        view.PrintText("Amount: " + view.FormatCurrency(static_cast<long long>(amount)));
         view.MoveToXY(5, 9);
         view.PrintText("Category: " + selectedCategory->GetName());
         view.MoveToXY(5, 10);
@@ -167,7 +167,7 @@ void NavigationController::HandleViewExpenses() {
     }
 
     view.ClearScreen();
-    view.PrintHeader("VIEW EXPENSES", 6 + 70 + 20 + 3);
+    view.PrintHeader("VIEW EXPENSES", 6 + 70 + 20 + 4);
 
     ArrayList<Transaction*>* all = appController->GetTransactions();
     ArrayList<Transaction*>* expenses = new ArrayList<Transaction*>();
@@ -196,7 +196,7 @@ void NavigationController::HandleViewExpenses() {
         std::string catName = (c != nullptr) ? c->GetName() : "Unknown Category";
 
         std::string summary = walletName + " | " + catName + " | " + t->GetDate().ToString() + " | " + t->GetDescription();
-        std::string data[] = {std::to_string(i + 1), summary, view.FormatCurrency(static_cast<long>(t->GetAmount()))};
+        std::string data[] = {std::to_string(i + 1), summary, view.FormatCurrency(static_cast<long long>(t->GetAmount()))};
         view.PrintTableRow(data, widths, 3);
     }
 
@@ -213,7 +213,7 @@ void NavigationController::HandleEditExpense() {
     }
 
     view.ClearScreen();
-    view.PrintHeader("EDIT EXPENSE", 6 + 70 + 20 + 3);
+    view.PrintHeader("EDIT EXPENSE", 6 + 70 + 20 + 4);
 
     ArrayList<Transaction*>* all = appController->GetTransactions();
     ArrayList<Transaction*>* expenses = new ArrayList<Transaction*>();
@@ -242,7 +242,7 @@ void NavigationController::HandleEditExpense() {
         std::string catName = (c != nullptr) ? c->GetName() : "Unknown Category";
 
         std::string summary = walletName + " | " + catName + " | " + t->GetDate().ToString() + " | " + t->GetDescription();
-        std::string data[] = {std::to_string(i + 1), summary, view.FormatCurrency(static_cast<long>(t->GetAmount()))};
+        std::string data[] = {std::to_string(i + 1), summary, view.FormatCurrency(static_cast<long long>(t->GetAmount()))};
         view.PrintTableRow(data, widths, 3);
     }
 
@@ -256,7 +256,7 @@ void NavigationController::HandleEditExpense() {
     // Show current values
     view.ClearScreen();
     view.PrintHeader("EDIT EXPENSE - CURRENT");
-    view.PrintText("Current Amount: " + view.FormatCurrency(static_cast<long>(target->GetAmount())));
+    view.PrintText("Current Amount: " + view.FormatCurrency(static_cast<long long>(target->GetAmount())));
     view.PrintText("Current Date   : " + target->GetDate().ToString());
     view.PrintText("Current Desc   : " + target->GetDescription());
 
@@ -280,7 +280,7 @@ void NavigationController::HandleDeleteExpense() {
     }
 
     view.ClearScreen();
-    view.PrintHeader("DELETE EXPENSE", 6 + 70 + 20 + 3);
+    view.PrintHeader("DELETE EXPENSE", 6 + 70 + 20 + 4);
 
     ArrayList<Transaction*>* all = appController->GetTransactions();
     ArrayList<Transaction*>* expenses = new ArrayList<Transaction*>();
@@ -309,7 +309,7 @@ void NavigationController::HandleDeleteExpense() {
         std::string catName = (c != nullptr) ? c->GetName() : "Unknown Category";
 
         std::string summary = walletName + " | " + catName + " | " + t->GetDate().ToString() + " | " + t->GetDescription();
-        std::string data[] = {std::to_string(i + 1), summary, view.FormatCurrency(static_cast<long>(t->GetAmount()))};
+        std::string data[] = {std::to_string(i + 1), summary, view.FormatCurrency(static_cast<long long>(t->GetAmount()))};
         view.PrintTableRow(data, widths, 3);
     }
 
