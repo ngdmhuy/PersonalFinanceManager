@@ -35,6 +35,7 @@ inline void SetupConsole() {
     GetConsoleMode(hOut, &dwMode);
     dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(hOut, dwMode);
+    SetConsoleOutputCP(CP_UTF8);
 }
 
 // ==========================================

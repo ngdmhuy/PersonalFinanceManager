@@ -44,6 +44,33 @@ double RecurringTransaction::GetAmount() const { return amount; }
 TransactionType RecurringTransaction::GetType() const { return type; }
 std::string RecurringTransaction::GetDescription() const { return description; }
 
+Date RecurringTransaction::GetNextDueDate() const {
+    Date nextDueDate;
+    if (!lastGeneratedDate.IsValid()) {
+        nextDueDate = startDate;
+    }
+    else {
+        switch (frequency) {
+            case Frequency::Daily:
+                nextDueDate = lastGeneratedDate.AddDays(1);
+                break;
+            case Frequency::Weekly:
+                nextDueDate = lastGeneratedDate.AddWeeks(1);
+                break;
+            case Frequency::Monthly:
+                nextDueDate = lastGeneratedDate.AddMonths(1);
+                break;
+            case Frequency::Yearly:
+                nextDueDate = lastGeneratedDate.AddYears(1);
+                break;
+            default:
+                break;
+        }
+    }
+    
+    return nextDueDate;
+}
+
 // ==========================================
 // 3. SETTERS
 // ==========================================
@@ -82,65 +109,9 @@ bool RecurringTransaction::ShouldGenerate(const Date& currentDate) {
     // 2. Check Start Date
     if (currentDate < startDate) return false;
     
-    // 3. First time run
-    if (!lastGeneratedDate.IsValid()) return true;
-    
-    // 4. CHECK FREQUENCY LOGIC
-    int lastD = lastGeneratedDate.GetDay();
-    int lastM = lastGeneratedDate.GetMonth();
-    int lastY = lastGeneratedDate.GetYear();
-    
-    Date nextDueDate;
-
-    switch (frequency) {
-        case Frequency::Daily:
-            return lastGeneratedDate < currentDate;
-
-        case Frequency::Weekly:
-            break; 
-
-        case Frequency::Monthly:
-            if (lastM == 12) {
-                nextDueDate = Date(lastD, 1, lastY + 1);
-            } else {
-                int nextM = lastM + 1;
-                int maxDayNextMonth = Date::DaysInMonth(nextM, lastY);
-                int nextD = (lastD > maxDayNextMonth) ? maxDayNextMonth : lastD;
-                nextDueDate = Date(nextD, nextM, lastY);
-            }
-            return currentDate >= nextDueDate;
-
-        case Frequency::Yearly:
-            if (lastD == 29 && lastM == 2 && !Date::IsLeapYear(lastY + 1)) {
-                nextDueDate = Date(28, 2, lastY + 1);
-            } else {
-                nextDueDate = Date(lastD, lastM, lastY + 1);
-            }
-            return currentDate >= nextDueDate;
-            
-        default:
-            return false;
-    }
-
-    if (frequency == Frequency::Weekly) {
-        struct tm lastTm = {0};
-        lastTm.tm_year = lastY - 1900;
-        lastTm.tm_mon = lastM - 1;
-        lastTm.tm_mday = lastD;
-        
-        struct tm currTm = {0};
-        currTm.tm_year = currentDate.GetYear() - 1900;
-        currTm.tm_mon = currentDate.GetMonth() - 1;
-        currTm.tm_mday = currentDate.GetDay();
-        
-        time_t lastTime = mktime(&lastTm);
-        time_t currTime = mktime(&currTm);
-        
-        double secondsDiff = difftime(currTime, lastTime);
-        return secondsDiff >= 604800; 
-    }
-
-    return false;
+    // 3. Check frequency logic
+    Date nextDueDate = GetNextDueDate();
+    return nextDueDate <= currentDate;
 }
 
 // ==========================================

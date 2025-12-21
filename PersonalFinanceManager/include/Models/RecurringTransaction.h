@@ -2,7 +2,7 @@
 //  RecurringTransaction.h
 //  PersonalFinanceManager
 //
-//  Created by Nguyen Dinh Minh Huyn on 5/12/25.
+//  Created by Nguyen Dinh Minh Huy on 5/12/25.
 //
 
 #ifndef RecurringTransaction_h
@@ -68,6 +68,8 @@ public:
     double GetAmount() const;
     TransactionType GetType() const;
     std::string GetDescription() const;
+    
+    Date GetNextDueDate() const;
     
     // ==========================================
     // 3. SETTERS (MUTATORS)

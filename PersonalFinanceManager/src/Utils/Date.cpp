@@ -48,6 +48,55 @@ bool Date::operator<=(const Date& other) const { return !(*this > other); }
 bool Date::operator>=(const Date& other) const { return !(*this < other); }
 bool Date::operator!=(const Date& other) const { return !(*this == other); }
 
+Date Date::AddDays(int n) const {
+    int d = day;
+    int m = month;
+    int y = year;
+    
+    d += n;
+    while (d > DaysInMonth(m, y)) {
+        d -= DaysInMonth(m, y);
+        ++m;
+        
+        if (m > 12) {
+            ++y;
+            m = 1;
+        }
+    }
+    
+    return Date(d, m, y);
+}
+
+Date Date::AddWeeks(int n) const {
+    return AddDays(7 * n);
+}
+
+Date Date::AddMonths(int n) const {
+    int d = day;
+    int m = month + n;
+    int y = year;
+    
+    while (m > 12) {
+        m -= 12;
+        ++y;
+    }
+    
+    int maxDays = DaysInMonth(m, y);
+    if (d > maxDays) d = maxDays;
+    return Date(d, m, y);
+}
+
+Date Date::AddYears(int n) const {
+    int d = day;
+    int m = month;
+    int y = year + n;
+    
+    // leap year case
+    int maxDays = DaysInMonth(m, y);
+    if (d > maxDays) d = maxDays;
+    return Date(d, m, y);
+}
+
 // ==========================================
 // 4. UTILITIES & STATIC HELPERS
 // ==========================================

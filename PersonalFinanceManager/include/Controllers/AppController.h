@@ -49,6 +49,7 @@ private:
     
     // Key: CategoryID -> Value: List of Transactions in that category
     HashMap<std::string, ArrayList<Transaction*>*>* categoryIndex;
+    HashMap<std::string, ArrayList<Transaction*>*>* incomeSourceIndex;
 
     // Helper functions to keep indices in sync
     void AddTransactionToIndex(Transaction* t);

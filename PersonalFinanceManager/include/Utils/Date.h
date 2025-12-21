@@ -49,6 +49,20 @@ public:
     bool operator>=(const Date& other) const;
     bool operator!=(const Date& other) const;
     
+    // Recurrence logic
+    /// @brief Returns a new Date object n days in the future
+    Date AddDays(int n) const;
+
+    /// @brief Returns a new Date object n weeks in the future
+    Date AddWeeks(int n) const;
+
+    /// @brief Returns a new Date object n months in the future
+    /// Handles end-of-month logic (e.g., Jan 31 + 1 Month -> Feb 28)
+    Date AddMonths(int n) const;
+
+    /// @brief Returns a new Date object n years in the future
+    Date AddYears(int n) const;
+    
     // ==========================================
     // 4. UTILITIES
     // ==========================================

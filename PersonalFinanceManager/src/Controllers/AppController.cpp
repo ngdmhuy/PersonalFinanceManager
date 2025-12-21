@@ -10,7 +10,7 @@
 
 // Include Utils
 #include "Utils/IdGenerator.h"
-#include "Utils/BinaryFileHelper.h"
+#include "Utils/AppHelpers.h"
 
 // Include Models
 #include "Models/Transaction.h"
@@ -33,90 +33,34 @@ const std::string FILE_SOURCES = "data/sources.bin";
 const std::string FILE_TRANSACTIONS = "data/transactions.bin";
 const std::string FILE_RECURRING = "data/recurring.bin";
 
-// ==========================================
-// STATIC HELPER FUNCTIONS
-// ==========================================
-
-// Comparator function for sorting Transactions by Date (Ascending)
-static bool CompareTransactionsByDate(Transaction* const& a, Transaction* const& b) {
-    return a->GetDate() < b->GetDate();
-}
-
-// Checks if a string is null, empty, or whitespace only
-static bool IsStringEmptyOrWhitespace(const std::string& str) {
-    return str.find_first_not_of(' ') == std::string::npos;
-}
+using namespace AppHelpers;
 
 // --- [HELPER] Indexing Logic ---
 
 void AppController::AddTransactionToIndex(Transaction* t) {
     // 1. Index by Wallet
-    std::string wId = t->GetWalletId();
-    if (!walletIndex->ContainsKey(wId)) {
-        walletIndex->Put(wId, new ArrayList<Transaction*>());
-    }
-    // HashMap::Get trả về con trỏ cấp 2 (V**), cần dereference (*) để lấy List*
-    (*walletIndex->Get(wId))->Add(t);
+    AddToIndexMap(walletIndex, t->GetWalletId(), t);
 
     // 2. Index by Category (Only for Expense)
-    if (t->GetType() == TransactionType::Expense) {
-        std::string cId = t->GetCategoryId();
-        if (!categoryIndex->ContainsKey(cId)) {
-            categoryIndex->Put(cId, new ArrayList<Transaction*>());
-        }
-        (*categoryIndex->Get(cId))->Add(t);
-    }
+    if (t->GetType() == TransactionType::Expense)
+        AddToIndexMap(categoryIndex, t->GetCategoryId(), t);
+    
+    // 3. Index by Income Sources
+    if (t->GetType() == TransactionType::Income)
+        AddToIndexMap(incomeSourceIndex, t->GetCategoryId(), t);
 }
 
 void AppController::RemoveTransactionFromIndex(Transaction* t) {
     // 1. Remove from Wallet Index
-    std::string wId = t->GetWalletId();
-    if (walletIndex->ContainsKey(wId)) {
-        (*walletIndex->Get(wId))->Remove(t);
-    }
+    RemoveFromIndexMap(walletIndex, t->GetWalletId(), t);
 
     // 2. Remove from Category Index
-    if (t->GetType() == TransactionType::Expense) {
-        std::string cId = t->GetCategoryId();
-        if (categoryIndex->ContainsKey(cId)) {
-            (*categoryIndex->Get(cId))->Remove(t);
-        }
-    }
-}
-
-template <typename T>
-static void FreeList(ArrayList<T*>*& list) {
-    if (list) {
-        for (int i = 0; i < list->Count(); ++i) {
-            delete list->Get(i);
-        }
-        
-        delete list;
-        list = nullptr;
-    }
-}
-
-template <typename T>
-static void SaveTable(const std::string& filename, ArrayList<T*>* list) {
-    std::ofstream fout(filename, std::ios::binary);
-    if (fout.is_open()) {
-        BinaryFileHelper::WriteList(fout, list);
-        fout.close();
-    }
-}
-
-template <typename T>
-static void LoadTable(const std::string& filename, ArrayList<T*>* list, HashMap<std::string, T*>* map) {
-    std::ifstream fin(filename, std::ios::binary);
-    if (fin.is_open()) {
-        BinaryFileHelper::ReadList(fin, list);
-        fin.close();
-        
-        for (size_t i = 0; i < list->Count(); ++i) {
-            T* obj = list->Get(i);
-            map->Put(obj->GetId(), obj);
-        }
-    }
+    if (t->GetType() == TransactionType::Expense)
+        RemoveFromIndexMap(categoryIndex, t->GetCategoryId(), t);
+    
+    // 3. Remove from Income Source Index
+    if (t->GetType() == TransactionType::Income)
+        RemoveFromIndexMap(incomeSourceIndex, t->GetCategoryId(), t);
 }
 
 // ==========================================
@@ -141,22 +85,26 @@ AppController::AppController(ConsoleView* v) : view(v) {
     // 3. Load existing data
     LoadData();
 
-    // 4. Automation checks
-    ProcessRecurringTransactions();
-
     // --- [NEW] Initialize Indices ---
     this->walletIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
     this->categoryIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
+    this->incomeSourceIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
 
     // Rebuild indices from loaded data
     for (size_t i = 0; i < transactions->Count(); ++i) {
         AddTransactionToIndex(transactions->Get(i));
     }
+    
+    ProcessRecurringTransactions();
 }
 
 AppController::~AppController() {
     // Save state before closing
     SaveData();
+    
+    ClearIndexMap(walletIndex);
+    ClearIndexMap(categoryIndex);
+    ClearIndexMap(incomeSourceIndex);
     
     FreeList(transactions);
     FreeList(recurringTransactions);
@@ -341,8 +289,11 @@ void AppController::AddTransaction(double amount, std::string walletId, std::str
         newTrans = new Expense(transId, walletId, categoryOrSourceId, amount, date, description);
         wallet->SubtractAmount(amount);
     }
+    
+    size_t insertPos = GetSortedInsertIndex(transactions, newTrans->GetDate());
+    transactions->Insert(insertPos, newTrans);
+    
 
-    transactions->Add(newTrans);
     AddTransactionToIndex(newTrans); // <--- Update Index
     transactionsMap->Put(transId, newTrans);
     
@@ -414,6 +365,8 @@ void AppController::AddRecurringTransaction(Frequency freq, Date startDate, Date
     RecurringTransaction* rt = new RecurringTransaction(id, freq, startDate, endDate, walletId, categoryId, amount, type, desc);
     recurringTransactions->Add(rt);
     recurringTransactionsMap->Put(id, rt);
+    
+    ProcessRecurringTransactions();
     if (view) view->ShowSuccess("Recurring transaction scheduled.");
 }
 
@@ -478,6 +431,8 @@ void AppController::EditRecurringTransaction(const std::string& id, Frequency fr
     r->SetCategoryId(categoryId);
     r->SetAmount(amount);
     r->SetDescription(desc);
+    
+    ProcessRecurringTransactions();
 
     if (view) view->ShowSuccess("Recurring transaction updated: " + id);
 }
@@ -491,27 +446,30 @@ void AppController::ProcessRecurringTransactions() {
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         RecurringTransaction* rt = recurringTransactions->Get(i);
 
-        if (rt->ShouldGenerate(today)) {
+        while (rt->ShouldGenerate(today)) {
             Wallet* w = GetWalletById(rt->GetWalletId());
-            if (w == nullptr) continue;
-
+            if (w == nullptr) break;
+            
             std::string prefix = EnumHelper::IdPrefixToString(IdPrefix::Transaction);
             std::string newTransId;
             do {
                 newTransId = IdGenerator::GenerateId(prefix);
             } while (transactionsMap->ContainsKey(newTransId));
             
-            Transaction* autoTrans = rt->GenerateTransaction(newTransId, today);
-            transactions->Add(autoTrans);
+            Transaction* autoTrans = rt->GenerateTransaction(newTransId, rt->GetNextDueDate());
+            
+            size_t pos = GetSortedInsertIndex(transactions, autoTrans->GetDate());
+            transactions->Insert(pos, autoTrans);
+            AddTransactionToIndex(autoTrans);
             
             if (rt->GetType() == TransactionType::Income) {
                 w->AddAmount(rt->GetAmount());
             } else {
                 w->SubtractAmount(rt->GetAmount());
             }
-
-            rt->SetLastGeneratedDate(today);
-            generatedCount++;
+            
+            rt->SetLastGeneratedDate(rt->GetNextDueDate());
+            ++generatedCount;
             if (view) view->ShowSuccess("Generated: " + rt->GetDescription() + " (" + std::to_string(static_cast<long long>(rt->GetAmount())) + ")");
         }
     }
@@ -524,10 +482,6 @@ void AppController::ProcessRecurringTransactions() {
 // --- [OPTIMIZATION] Binary Search for Date Range ---
 ArrayList<Transaction*>* AppController::GetTransactionsByDateRange(Date start, Date end) {
     ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
-
-    // 1. Đảm bảo danh sách đã được sắp xếp tăng dần theo ngày
-    // (Lưu ý: SaveData đã sort, nhưng nếu vừa thêm mới thì cần sort lại để Binary Search chạy đúng)
-    transactions->Sort(CompareTransactionsByDate);
 
     if (transactions->Count() == 0) return result;
 
@@ -749,6 +703,13 @@ bool AppController::EditTransaction(const std::string& id, double newAmount, Dat
         if (view) view->ShowError("Wallet linked to this transaction not found!");
         return false;
     }
+    
+    bool dateChanged = (target->GetDate()) != newDate;
+    
+    if (dateChanged) {
+        RemoveTransactionFromIndex(target);
+        transactions->Remove(target);
+    }
 
     // RE-CALCULATE BALANCE
     // 1. Undo Old
@@ -768,6 +729,12 @@ bool AppController::EditTransaction(const std::string& id, double newAmount, Dat
     target->SetAmount(newAmount);
     target->SetDate(newDate);
     target->SetDescription(newDesc);
+    
+    if (dateChanged) {
+        size_t newPos = GetSortedInsertIndex(transactions, newDate);
+        transactions->Insert(newPos, target);
+        AddTransactionToIndex(target);
+    }
 
     if (view) view->ShowSuccess("Transaction updated. Wallet balance adjusted.");
     return true;
