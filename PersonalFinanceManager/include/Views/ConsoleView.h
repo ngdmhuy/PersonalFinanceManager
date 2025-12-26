@@ -15,10 +15,6 @@ private:
     // Used to adapt header width to match tables. Defaults to 80.
     int contentWidth = 80;
 
-    // Baseline row used for footer placement. This keeps footer and inline
-    // error messages at predictable rows and prevents drift.
-    int lastFooterY = 23;
-
 public:
     // Color constants for consistent UI theming - Windows Console
     static const int COLOR_SUCCESS = 10;      /// Light Green for success messages
