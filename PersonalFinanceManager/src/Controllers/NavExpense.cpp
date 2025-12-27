@@ -169,13 +169,7 @@ void NavigationController::HandleViewExpenses() {
     view.ClearScreen();
     view.PrintHeader("VIEW EXPENSES", 6 + 70 + 20 + 4);
 
-    ArrayList<Transaction*>* all = appController->GetTransactions();
-    ArrayList<Transaction*>* expenses = new ArrayList<Transaction*>();
-
-    for (size_t i = 0; i < all->Count(); ++i) {
-        Transaction* t = all->Get(i);
-        if (t->GetType() == TransactionType::Expense) expenses->Add(t);
-    }
+    ArrayList<Transaction*>* expenses = appController->GetTransactionsByType(TransactionType::Expense);
 
     if (expenses->Count() == 0) {
         view.ShowInfo("No expenses recorded.");
@@ -215,13 +209,7 @@ void NavigationController::HandleEditExpense() {
     view.ClearScreen();
     view.PrintHeader("EDIT EXPENSE", 6 + 70 + 20 + 4);
 
-    ArrayList<Transaction*>* all = appController->GetTransactions();
-    ArrayList<Transaction*>* expenses = new ArrayList<Transaction*>();
-
-    for (size_t i = 0; i < all->Count(); ++i) {
-        Transaction* t = all->Get(i);
-        if (t->GetType() == TransactionType::Expense) expenses->Add(t);
-    }
+    ArrayList<Transaction*>* expenses = appController->GetTransactionsByType(TransactionType::Expense);
 
     if (expenses->Count() == 0) {
         view.ShowInfo("No expenses to edit.");
@@ -282,13 +270,7 @@ void NavigationController::HandleDeleteExpense() {
     view.ClearScreen();
     view.PrintHeader("DELETE EXPENSE", 6 + 70 + 20 + 4);
 
-    ArrayList<Transaction*>* all = appController->GetTransactions();
-    ArrayList<Transaction*>* expenses = new ArrayList<Transaction*>();
-
-    for (size_t i = 0; i < all->Count(); ++i) {
-        Transaction* t = all->Get(i);
-        if (t->GetType() == TransactionType::Expense) expenses->Add(t);
-    }
+    ArrayList<Transaction*>* expenses = appController->GetTransactionsByType(TransactionType::Expense);
 
     if (expenses->Count() == 0) {
         view.ShowInfo("No expenses to delete.");

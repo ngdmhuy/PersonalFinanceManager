@@ -10,6 +10,7 @@
 
 // Forward Declaration
 class AppController;
+class Transaction;
 
 class NavigationController {
 public:
@@ -78,6 +79,19 @@ private:
     void HandleViewRecurring();
     void HandleEditRecurring();
     void HandleDeleteRecurring();
+    
+    // Search handlers
+    void ShowSearchFlow();
+    void HandleSearchByKeyword();
+    void HandleFilterByWallet();
+    void HandleFilterByCategory();
+    void HandleFilterBySource();
+    void HandleFilterByAmount();
+    void PrintTransactionList(ArrayList<Transaction*>* list);
+    
+    // Clear data handlers
+    void HandleClearData();
+    void HandleSaveData();
 
     // Helper: show message and wait for key
     void PauseWithMessage(const std::string& msg);

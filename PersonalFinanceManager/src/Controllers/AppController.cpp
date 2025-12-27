@@ -33,6 +33,9 @@ const std::string FILE_SOURCES = "data/sources.bin";
 const std::string FILE_TRANSACTIONS = "data/transactions.bin";
 const std::string FILE_RECURRING = "data/recurring.bin";
 
+// Auto-save interval
+const int AUTO_SAVE_INTERVAL = 60;
+
 using namespace AppHelpers;
 
 // Autosave
@@ -40,17 +43,28 @@ using namespace AppHelpers;
 void AppController::AutoSaveWorker() {
     while (!stopAutoSave) {
         // Sleep for 60 seconds (checking stop flag every second)
-        for (int i = 0; i < 60; ++i) {
+        for (int i = 0; i < AUTO_SAVE_INTERVAL; ++i) {
             if (stopAutoSave) return;
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
 
-        // Perform Save
-        if (view) view->ShowInfo("[AutoSave] Saving data...");
+        ShowAutoSaveIndicator();
         
         // Lock before saving
         std::lock_guard<std::recursive_mutex> lock(dataMutex);
-        SaveData();
+        SaveData(true);
+    }
+}
+
+void AppController::ShowAutoSaveIndicator() {
+    if (view) {
+        view->MoveToXY(50, 2);
+        
+        view->SetColor(ConsoleView::COLOR_SUCCESS);
+        std::cout << "[ Auto-Saving... ]" << std::flush;
+        view->ResetColor();
+
+        view->MoveToXY(0, 20);
     }
 }
 
@@ -151,11 +165,11 @@ AppController::~AppController() {
 // 2. DATA PERSISTENCE
 // ==========================================
 
-void AppController::SaveData() {
+void AppController::SaveData(bool silent) {
     std::lock_guard<std::recursive_mutex> lock(dataMutex);
     // --- [UPDATE] Sort before saving ---
     // Sort transactions by date so next load is already sorted
-    transactions->Sort(CompareTransactionsByDate);
+    // transactions->Sort(CompareTransactionsByDate);
 
     SaveTable(FILE_CATEGORIES, categoriesList);
     SaveTable(FILE_SOURCES, incomeSourcesList);
@@ -163,7 +177,11 @@ void AppController::SaveData() {
     SaveTable(FILE_TRANSACTIONS, transactions);
     SaveTable(FILE_RECURRING, recurringTransactions);
     
-    if (view) view->ShowSuccess("Data saved to disk.");
+    if (!silent && view) {
+        view->ShowSuccess("Data saved to disk.");
+        int minutes = AUTO_SAVE_INTERVAL / 60;
+        view->ShowInfo("Note: Background auto-save is active (runs every " + std::to_string(minutes) + " min).");
+    }
 }
 
 void AppController::LoadData() {
@@ -210,11 +228,13 @@ void AppController::AddWallet(const std::string& name, double initialBalance) {
 }
 
 Wallet* AppController::GetWalletById(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     Wallet** w = walletsMap->Get(id);
     return (w != nullptr) ? *w : nullptr;
 }
 
 double AppController::GetTotalBalance() const {
+    std::lock_guard<std::recursive_mutex> lock(const_cast<AppController*>(this)->dataMutex);
     double total = 0;
     for (size_t i = 0; i < walletsList->Count(); ++i) {
         total += walletsList->Get(i)->GetBalance();
@@ -247,6 +267,7 @@ void AppController::AddCategory(const std::string& name) {
 }
 
 Category* AppController::GetCategoryById(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     Category** c = categoriesMap->Get(id);
     return (c != nullptr) ? *c : nullptr;
 }
@@ -272,6 +293,7 @@ void AppController::AddIncomeSource(const std::string& name) {
 }
 
 IncomeSource* AppController::GetIncomeSourceById(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     IncomeSource** s = incomeSourcesMap->Get(id);
     return (s != nullptr) ? *s : nullptr;
 }
@@ -404,6 +426,7 @@ void AppController::AddRecurringTransaction(Frequency freq, Date startDate, Date
 }
 
 RecurringTransaction* AppController::GetRecurringById(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     RecurringTransaction** r = recurringTransactionsMap->Get(id);
     return (r != nullptr) ? *r : nullptr;
 }
@@ -519,6 +542,7 @@ void AppController::ProcessRecurringTransactions() {
 
 // --- [OPTIMIZATION] Binary Search for Date Range ---
 ArrayList<Transaction*>* AppController::GetTransactionsByDateRange(Date start, Date end) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
 
     if (transactions->Count() == 0) return result;
@@ -789,32 +813,110 @@ bool AppController::EditTransaction(const std::string& id, double newAmount, Dat
 // PART 8: STATISTICS & FILTERING ENGINE
 // =================================================================================
 
+ArrayList<Transaction*>* AppController::GetTransactionsByType(TransactionType type) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
+    
+    return Filter(transactions, [type](Transaction* t) {
+        return t->GetType() == type;
+    });
+}
+
+ArrayList<Transaction*>* AppController::GetTransactionsByAmountRange(double minAmount, double maxAmount) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
+    
+    return AppHelpers::Filter(transactions, [minAmount, maxAmount](Transaction* t) {
+        return t->GetAmount() >= minAmount && t->GetAmount() <= maxAmount;
+    });
+}
+
 ArrayList<Transaction*>* AppController::GetTransactionsByWallet(const std::string& walletId) {
-    // --- [OPTIMIZED] Use HashMap Index ---
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
+    
+    ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
+
     if (walletIndex->ContainsKey(walletId)) {
-        // Return the cached list directly!
-        return *walletIndex->Get(walletId);
+        ArrayList<Transaction*>* cachedList = *walletIndex->Get(walletId);
+        
+        for (size_t i = 0; i < cachedList->Count(); ++i) {
+            result->Add(cachedList->Get(i));
+        }
     }
-    // Return empty list if not found
-    return new ArrayList<Transaction*>(); 
+    
+    return result;
 }
 
 ArrayList<Transaction*>* AppController::GetTransactionsByCategory(const std::string& categoryId) {
-    // --- [OPTIMIZED] Use HashMap Index ---
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
+
+    ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
+
     if (categoryIndex->ContainsKey(categoryId)) {
-        return *categoryIndex->Get(categoryId);
+        ArrayList<Transaction*>* cachedList = *categoryIndex->Get(categoryId);
+        
+        for (size_t i = 0; i < cachedList->Count(); ++i) {
+            result->Add(cachedList->Get(i));
+        }
     }
-    return new ArrayList<Transaction*>();
+
+    return result;
+}
+
+ArrayList<Transaction*>* AppController::GetTransactionsByIncomeSource(const std::string& sourceId) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
+    
+    ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
+
+    if (incomeSourceIndex->ContainsKey(sourceId)) {
+        ArrayList<Transaction*>* cachedList = *incomeSourceIndex->Get(sourceId);
+        
+        for (size_t i = 0; i < cachedList->Count(); ++i) {
+            result->Add(cachedList->Get(i));
+        }
+    }
+    
+    return result;
 }
 
 ArrayList<Transaction*>* AppController::SearchTransactions(const std::string& keyword) {
-    ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     
-    for (size_t i = 0; i < transactions->Count(); ++i) {
-        Transaction* t = transactions->Get(i);
-        if (t->GetDescription().find(keyword) != std::string::npos) {
-            result->Add(t);
-        }
-    }
-    return result;
+    return AppHelpers::Filter(transactions, [keyword](Transaction* t) {
+        return t->GetDescription().find(keyword) != std::string::npos ||
+               t->GetId() == keyword;
+    });
+}
+
+void AppController::ClearDatabase() {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
+
+    // Clear In-Memory Data
+    ClearIndexMap(walletIndex);
+    ClearIndexMap(categoryIndex);
+    ClearIndexMap(incomeSourceIndex);
+    
+    // Re-init indices
+    walletIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
+    categoryIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
+    incomeSourceIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
+
+    FreeList(transactions); transactions = new ArrayList<Transaction*>();
+    FreeList(recurringTransactions); recurringTransactions = new ArrayList<RecurringTransaction*>();
+    FreeList(walletsList); walletsList = new ArrayList<Wallet*>();
+    FreeList(categoriesList); categoriesList = new ArrayList<Category*>();
+    FreeList(incomeSourcesList); incomeSourcesList = new ArrayList<IncomeSource*>();
+
+    if (transactionsMap) { delete transactionsMap; transactionsMap = new HashMap<std::string, Transaction*>(); }
+    if (recurringTransactionsMap) { delete recurringTransactionsMap; recurringTransactionsMap = new HashMap<std::string, RecurringTransaction*>(); }
+    if (walletsMap) { delete walletsMap; walletsMap = new HashMap<std::string, Wallet*>(); }
+    if (categoriesMap) { delete categoriesMap; categoriesMap = new HashMap<std::string, Category*>(); }
+    if (incomeSourcesMap) { delete incomeSourcesMap; incomeSourcesMap = new HashMap<std::string, IncomeSource*>(); }
+
+    // Delete Physical Files
+    std::remove(FILE_WALLETS.c_str());
+    std::remove(FILE_CATEGORIES.c_str());
+    std::remove(FILE_SOURCES.c_str());
+    std::remove(FILE_TRANSACTIONS.c_str());
+    std::remove(FILE_RECURRING.c_str());
+
+    if (view) view->ShowSuccess("All data has been wiped successfully.");
 }

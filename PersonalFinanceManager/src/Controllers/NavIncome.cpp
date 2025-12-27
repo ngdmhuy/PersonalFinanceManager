@@ -167,42 +167,36 @@ void NavigationController::HandleViewIncome() {
     view.ClearScreen();
     view.PrintHeader("VIEW INCOME", 6 + 18 + 20 + 15 + 12 + 30 + 7);
 
-    ArrayList<Transaction*>* txs = appController->GetTransactions();
-    if (!txs || txs->Count() == 0) {
-        view.ShowInfo("No transactions available.");
+    ArrayList<Transaction*>* incomes = appController->GetTransactionsByType(TransactionType::Income);
+
+    if (!incomes || incomes->Count() == 0) {
+        view.ShowInfo("No income records found.");
+        if (incomes) delete incomes; // Clean up
         PauseWithMessage("Press any key to return...");
         return;
     }
 
-    // Print only Income transactions
     std::string headers[] = {"Index", "ID", "Wallet", "Amount", "Date", "Desc"};
     int widths[] = {6, 18, 20, 15, 12, 30};
     view.PrintTableHeader(headers, widths, 6);
 
-    int count = 0;
-    for (size_t i = 0; i < txs->Count(); ++i) {
-        Transaction* t = txs->Get(i);
-        if (t->GetType() != TransactionType::Income) continue;
-        ++count;
+    for (size_t i = 0; i < incomes->Count(); ++i) {
+        Transaction* t = incomes->Get(i);
+        
         std::string walletName = "-";
         Wallet* w = appController->GetWalletById(t->GetWalletId());
         if (w) walletName = w->GetName();
+        
         std::string dateStr = t->GetDate().ToString();
         std::string desc = t->GetDescription();
         if ((int)desc.length() > 28) desc = desc.substr(0, 27) + "~";
 
-        std::string data[] = {std::to_string(count), t->GetId(), walletName, view.FormatCurrency(static_cast<long long>(t->GetAmount())), dateStr, desc};
+        std::string data[] = {std::to_string(i + 1), t->GetId(), walletName, view.FormatCurrency(static_cast<long long>(t->GetAmount())), dateStr, desc};
         view.PrintTableRow(data, widths, 6);
     }
 
-    if (count == 0) {
-        view.PrintTableSeparator(widths, 6);
-        view.ShowInfo("No income records found.");
-        PauseWithMessage("Press any key to return...");
-        return;
-    }
-
     view.PrintTableSeparator(widths, 6);
+    delete incomes;
     PauseWithMessage("Press any key to return...");
 }
 
@@ -216,30 +210,20 @@ void NavigationController::HandleEditIncome() {
     view.ClearScreen();
     view.PrintHeader("EDIT INCOME", 6 + 18 + 20 + 15 + 12 + 30 + 6);
 
-    ArrayList<Transaction*>* txs = appController->GetTransactions();
-    if (!txs || txs->Count() == 0) {
-        view.ShowInfo("No transactions available.");
-        PauseWithMessage("Press any key to return...");
-        return;
-    }
-
-    // Build list of income transactions with indices using ArrayList
-    ArrayList<Transaction*>* incomes = new ArrayList<Transaction*>();
-    for (size_t i = 0; i < txs->Count(); ++i) {
-        Transaction* t = txs->Get(i);
-        if (t->GetType() == TransactionType::Income) incomes->Add(t);
-    }
+    ArrayList<Transaction*>* incomes = appController->GetTransactionsByType(TransactionType::Income);
 
     if (!incomes || incomes->Count() == 0) {
         view.ShowInfo("No income records found.");
-        PauseWithMessage("Press any key to return...");
         if (incomes) delete incomes;
+        PauseWithMessage("Press any key to return...");
         return;
     }
 
+    // Print Table
     std::string headers[] = {"Index", "ID", "Wallet", "Amount", "Date", "Desc"};
     int widths[] = {6, 18, 20, 15, 12, 30};
     view.PrintTableHeader(headers, widths, 6);
+    
     for (size_t i = 0; i < incomes->Count(); ++i) {
         Transaction* t = incomes->Get(i);
         Wallet* w = appController->GetWalletById(t->GetWalletId());
@@ -249,12 +233,19 @@ void NavigationController::HandleEditIncome() {
     }
     view.PrintTableSeparator(widths, 6);
 
+    // Selection Logic
     view.MoveToXY(5, 9 + (int)incomes->Count());
     int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(incomes->Count())) + ") (0 to cancel): ", 1, static_cast<int>(incomes->Count()), 5, 9 + static_cast<int>(incomes->Count()));
-    if (idx == 0) { view.ShowInfo("Selection cancelled."); delete incomes; PauseWithMessage("Press any key to continue..."); return; }
+    
+    if (idx == 0) {
+        view.ShowInfo("Selection cancelled.");
+        delete incomes;
+        PauseWithMessage("Press any key to continue...");
+        return;
+    }
+    
     Transaction* target = incomes->Get(idx - 1);
 
-    // Show current values and prompt new ones
     view.ClearScreen();
     view.PrintHeader("EDIT INCOME - DETAILS");
     Wallet* w = appController->GetWalletById(target->GetWalletId());
@@ -286,58 +277,58 @@ void NavigationController::HandleDeleteIncome() {
     view.ClearScreen();
     view.PrintHeader("DELETE INCOME", 6 + 18 + 20 + 15 + 12 + 30 + 7);
 
-    ArrayList<Transaction*>* txs = appController->GetTransactions();
-    if (!txs || txs->Count() == 0) {
-        view.ShowInfo("No transactions available.");
-        PauseWithMessage("Press any key to return...");
-        return;
-    }
+    ArrayList<Transaction*>* incomes = appController->GetTransactionsByType(TransactionType::Income);
 
-    // Build list of income transactions using ArrayList
-    ArrayList<Transaction*>* incomes = new ArrayList<Transaction*>();
-    for (size_t i = 0; i < txs->Count(); ++i) {
-        Transaction* t = txs->Get(i);
-        if (t->GetType() == TransactionType::Income) incomes->Add(t);
-    }
+        if (!incomes || incomes->Count() == 0) {
+            view.ShowInfo("No income records found.");
+            if (incomes) delete incomes;
+            PauseWithMessage("Press any key to return...");
+            return;
+        }
 
-    if (!incomes || incomes->Count() == 0) {
-        view.ShowInfo("No income records found.");
-        PauseWithMessage("Press any key to return...");
-        if (incomes) delete incomes;
-        return;
-    }
+        // Print Table
+        std::string headers[] = {"Index", "ID", "Wallet", "Amount", "Date", "Desc"};
+        int widths[] = {6, 18, 20, 15, 12, 30};
+        view.PrintTableHeader(headers, widths, 6);
+        
+        for (size_t i = 0; i < incomes->Count(); ++i) {
+            Transaction* t = incomes->Get(i);
+            Wallet* w = appController->GetWalletById(t->GetWalletId());
+            std::string walletName = w ? w->GetName() : "-";
+            std::string data[] = {std::to_string(i + 1), t->GetId(), walletName, view.FormatCurrency(static_cast<long long>(t->GetAmount())), t->GetDate().ToString(), t->GetDescription()};
+            view.PrintTableRow(data, widths, 6);
+        }
+        view.PrintTableSeparator(widths, 6);
 
-    std::string headers[] = {"Index", "ID", "Wallet", "Amount", "Date", "Desc"};
-    int widths[] = {6, 18, 20, 15, 12, 30};
-    view.PrintTableHeader(headers, widths, 6);
-    for (size_t i = 0; i < incomes->Count(); ++i) {
-        Transaction* t = incomes->Get(i);
-        Wallet* w = appController->GetWalletById(t->GetWalletId());
-        std::string walletName = w ? w->GetName() : "-";
-        std::string data[] = {std::to_string(i + 1), t->GetId(), walletName, view.FormatCurrency(static_cast<long long>(t->GetAmount())), t->GetDate().ToString(), t->GetDescription()};
-        view.PrintTableRow(data, widths, 6);
-    }
-    view.PrintTableSeparator(widths, 6);
+        // Selection Logic
+        view.MoveToXY(5, 9 + (int)incomes->Count());
+        int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(incomes->Count())) + ") (0 to cancel): ", 1, static_cast<int>(incomes->Count()), 5, 9 + static_cast<int>(incomes->Count()));
+        
+        if (idx == 0) {
+            view.ShowInfo("Selection cancelled.");
+            delete incomes;
+            PauseWithMessage("Press any key to continue...");
+            return;
+        }
+        
+        Transaction* target = incomes->Get(idx - 1);
+        
+        view.MoveToXY(5, 11 + (int)incomes->Count());
+        std::cout << "Are you sure you want to delete this income? (Y/N): ";
+        int ch = GetKeyPress();
+        view.PrintText("");
 
-    view.MoveToXY(5, 9 + (int)incomes->Count());
-    int idx = InputValidator::GetValidIndex("Select index (1-" + std::to_string(static_cast<int>(incomes->Count())) + ") (0 to cancel): ", 1, static_cast<int>(incomes->Count()), 5, 9 + static_cast<int>(incomes->Count()));
-    if (idx == 0) { view.ShowInfo("Selection cancelled."); delete incomes; PauseWithMessage("Press any key to continue..."); return; }
-    Transaction* target = incomes->Get(idx - 1);
-    view.MoveToXY(5, 11 + (int)incomes->Count());
-    std::cout << "Are you sure you want to delete this income? (Y/N): ";
-    int ch = GetKeyPress();
-    // Emit newline and update cursor tracking
-    view.PrintText("");
+        if (ch != 'y' && ch != 'Y') {
+            view.ShowInfo("Deletion cancelled.");
+            delete incomes;
+            PauseWithMessage("Press any key to continue...");
+            return;
+        }
 
-    if (ch != 'y' && ch != 'Y') {
-        view.ShowInfo("Deletion cancelled.");
+        appController->DeleteTransaction(target->GetId());
+        
+        delete incomes;
         PauseWithMessage("Press any key to continue...");
-        return;
-    }
-
-    appController->DeleteTransaction(target->GetId());
-    delete incomes;
-    PauseWithMessage("Press any key to continue...");
 }
 
 // ===== SOURCE MANAGEMENT =====

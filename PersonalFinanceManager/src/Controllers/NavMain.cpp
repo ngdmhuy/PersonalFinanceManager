@@ -13,6 +13,7 @@
 #include "Models/RecurringTransaction.h"
 
 #include <iostream>
+#include <limits>
 
 
 NavigationController::NavigationController(AppController* app) : appController(app), running(false) {
@@ -21,7 +22,6 @@ NavigationController::NavigationController(AppController* app) : appController(a
 }
 
 NavigationController::~NavigationController() {}
-
 
 void NavigationController::Run() {
     running = true;
@@ -54,6 +54,9 @@ void NavigationController::Run() {
                 case '4':
                 case '5':
                 case '6':
+                case '7':
+                case '8':
+                case '9':
                     HandleMainMenuChoice(choice);
                     break;
                 default:
@@ -83,12 +86,48 @@ void NavigationController::HandleMainMenuChoice(char c) {
             ShowRecurringFlow();
             break;
         case '6':
+            ShowSearchFlow();
+            break;
+        case '7':
+            HandleClearData();
+            break;
+        case '8':
+            HandleSaveData();
+            break;
+        case '9':
             running = false;
             break;
         default:
             view.ShowError("Invalid selection. Try again.");
             break;
     }
+}
+
+void NavigationController::HandleClearData() {
+    view.ClearScreen();
+    view.PrintHeader("DANGER ZONE: CLEAR DATA");
+    view.ShowError("WARNING: This will delete ALL wallets, transactions, and settings.");
+    view.ShowError("This action cannot be undone.");
+    
+    view.MoveToXY(5, 8);
+    std::cout << "Are you sure you want to proceed? Type 'DELETE' to confirm: ";
+    
+    std::string confirm;
+    std::cin >> confirm;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    
+    if (confirm == "DELETE") {
+        appController->ClearDatabase();
+        PauseWithMessage("System reset complete. Press any key...");
+    } else {
+        view.ShowInfo("Operation cancelled.");
+        PauseWithMessage("Press any key to return...");
+    }
+}
+
+void NavigationController::HandleSaveData() {
+    appController->SaveData();
+    PauseWithMessage("Press any key to continue...");
 }
 
 void NavigationController::PauseWithMessage(const std::string& msg) {

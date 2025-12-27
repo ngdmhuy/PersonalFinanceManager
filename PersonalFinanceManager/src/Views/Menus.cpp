@@ -1,5 +1,5 @@
 #include "Views/Menus.h"
-#include "Utils/PlatformUtils.h" // Replaces conio.h
+#include "Utils/PlatformUtils.h"
 #include <iostream>
 
 using namespace std;
@@ -11,7 +11,7 @@ Menus::Menus() {}
 char Menus::DisplayMainMenu() {
     view.ClearScreen();
     view.PrintHeader(MAIN_MENU_TITLE);
-    view.PrintBox(8,5,35,8);
+    view.PrintBox(8,5,40,11);
 
     view.MoveToXY(10, 6);
     cout << MAIN_MENU_1 << endl;
@@ -25,8 +25,14 @@ char Menus::DisplayMainMenu() {
     cout << MAIN_MENU_5 << endl;
     view.MoveToXY(10, 11);
     cout << MAIN_MENU_6 << endl;
+    view.MoveToXY(10, 12);
+    cout << MAIN_MENU_7 << endl;
+    view.MoveToXY(10, 13);
+    cout << MAIN_MENU_8 << endl;
+    view.MoveToXY(10, 14);
+    cout << MAIN_MENU_9 << endl;
 
-    view.PrintShortcutFooter("[1-6] Select | [ESC] Dashboard", "Main Menu");
+    view.PrintShortcutFooter("[1-9] Select | [ESC] Dashboard", "Main Menu");
     
     // CROSS-PLATFORM FIX
     return GetKeyPress();
@@ -171,6 +177,28 @@ char Menus::DisplayRecurringMenu() {
     return GetKeyPress();
 }
 
+// SEARCH MENU IMPLEMENTATION
+char Menus::DisplaySearchMenu() {
+    view.ClearScreen();
+    view.PrintHeader(SEARCH_MENU_TITLE);
+    view.PrintBox(8, 5, 40, 7);
+
+    view.MoveToXY(10, 6);
+    cout << SEARCH_MENU_1 << endl;
+    view.MoveToXY(10, 7);
+    cout << SEARCH_MENU_2 << endl;
+    view.MoveToXY(10, 8);
+    cout << SEARCH_MENU_3 << endl;
+    view.MoveToXY(10, 9);
+    cout << SEARCH_MENU_4 << endl;
+    view.MoveToXY(10, 10);
+    cout << SEARCH_MENU_5 << endl;
+
+    view.PrintShortcutFooter("[1-5] Select | [ESC] Back", "Search Menu");
+    
+    return GetKeyPress();
+}
+
 //STRING CONSTANTS
 // Main Menu
 const string Menus::MAIN_MENU_TITLE = "PERSONAL FINANCE MANAGER - MAIN MENU";
@@ -179,7 +207,10 @@ const string Menus::MAIN_MENU_2 = "2. Expense Management";
 const string Menus::MAIN_MENU_3 = "3. View Reports & Statistics";
 const string Menus::MAIN_MENU_4 = "4. Manage Wallets";
 const string Menus::MAIN_MENU_5 = "5. Manage Recurring Transactions";
-const string Menus::MAIN_MENU_6 = "6. Exit";
+const string Menus::MAIN_MENU_6 = "6. Search Transactions";
+const string Menus::MAIN_MENU_7 = "7. Clear All Data";
+const string Menus::MAIN_MENU_8 = "8. Save Data";
+const string Menus::MAIN_MENU_9 = "9. Exit";
 
 // Recurring Menu
 const string Menus::RECURRING_MENU_TITLE = "RECURRING TRANSACTIONS";
@@ -238,3 +269,11 @@ const string Menus::SOURCE_MENU_1 = "1. Create Source";
 const string Menus::SOURCE_MENU_2 = "2. View Sources";
 const string Menus::SOURCE_MENU_3 = "3. Edit Source";
 const string Menus::SOURCE_MENU_4 = "4. Delete Source";
+
+// Search Management
+const string Menus::SEARCH_MENU_TITLE = "SEARCH & FILTER TRANSACTIONS";
+const string Menus::SEARCH_MENU_1 = "1. Search by Keyword (ID/Desc)";
+const string Menus::SEARCH_MENU_2 = "2. Filter by Wallet";
+const string Menus::SEARCH_MENU_3 = "3. Filter by Category";
+const string Menus::SEARCH_MENU_4 = "4. Filter by Income Source";
+const string Menus::SEARCH_MENU_5 = "5. Filter by Amount Range";

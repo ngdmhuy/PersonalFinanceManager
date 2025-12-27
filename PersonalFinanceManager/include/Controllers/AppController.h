@@ -28,11 +28,12 @@ class IncomeSource;
 class AppController {
 private:
     // Threading components
-    std::recursive_mutex dataMutex; // Recursive allows locking multiple times in one thread
+    std::recursive_mutex dataMutex;
     std::thread autoSaveThread;
     std::atomic<bool> stopAutoSave;
 
     void AutoSaveWorker();
+    void ShowAutoSaveIndicator();
     
     // --- UI Messaging ---
     ConsoleView* view;
@@ -77,7 +78,7 @@ public:
     ~AppController();
 
     // 2. DATA PERSISTENCE
-    void SaveData();
+    void SaveData(bool silent = false);
     void LoadData();
 
     // 3. WALLET LOGIC
@@ -125,12 +126,16 @@ public:
 
     // --- FILTERS & STATISTICS ---
     ArrayList<Transaction*>* GetTransactionsByDateRange(Date start, Date end);
+    ArrayList<Transaction*>* GetTransactionsByType(TransactionType type);
     
     // --- [NEW] ADVANCED FILTERS (For Statistics Engine) ---
+    ArrayList<Transaction*>* GetTransactionsByAmountRange(double minAmount, double maxAmount);
     ArrayList<Transaction*>* GetTransactionsByWallet(const std::string& walletId);
     ArrayList<Transaction*>* GetTransactionsByCategory(const std::string& categoryId);
+    ArrayList<Transaction*>* GetTransactionsByIncomeSource(const std::string& sourceId);
     ArrayList<Transaction*>* SearchTransactions(const std::string& keyword);
 
-}; 
+    void ClearDatabase();
+};
 
 #endif // !AppController_h

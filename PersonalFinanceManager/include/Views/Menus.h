@@ -34,6 +34,13 @@ public:
     /// @brief Displays reports and analytics menu
     /// @return char User's submenu selection
     char DisplayReportsMenu();
+    
+    // CATEGORY & SOURCE MANAGEMENT MENUS
+    char DisplayCategoryMenu();
+    char DisplaySourceMenu();
+    char DisplayRecurringMenu();
+    
+    char DisplaySearchMenu();
 
     //MENU TEXT CONSTANTS
     // Main Dashboard Menu
@@ -44,6 +51,9 @@ public:
     static const std::string MAIN_MENU_4;
     static const std::string MAIN_MENU_5;
     static const std::string MAIN_MENU_6;
+    static const std::string MAIN_MENU_7;
+    static const std::string MAIN_MENU_8;
+    static const std::string MAIN_MENU_9;
     
     // Expense Menu
     static const std::string EXPENSE_MENU_TITLE;
@@ -82,11 +92,6 @@ public:
     static const std::string ADD_EXPENSE_TITLE;
     static const std::string SELECT_CATEGORY_PROMPT;
 
-    // CATEGORY & SOURCE MANAGEMENT MENUS
-    char DisplayCategoryMenu();
-    char DisplaySourceMenu();
-    char DisplayRecurringMenu();
-
     static const std::string CATEGORY_MENU_TITLE;
     static const std::string CATEGORY_MENU_1;
     static const std::string CATEGORY_MENU_2;
@@ -104,6 +109,13 @@ public:
     static const std::string RECURRING_MENU_2;
     static const std::string RECURRING_MENU_3;
     static const std::string RECURRING_MENU_4;
+    
+    static const std::string SEARCH_MENU_TITLE;
+    static const std::string SEARCH_MENU_1;
+    static const std::string SEARCH_MENU_2;
+    static const std::string SEARCH_MENU_3;
+    static const std::string SEARCH_MENU_4;
+    static const std::string SEARCH_MENU_5;
 };
 
 #endif // !Menus_h

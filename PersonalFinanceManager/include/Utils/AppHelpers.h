@@ -76,6 +76,21 @@ void LoadTable(const std::string& filename, ArrayList<T*>* list, HashMap<std::st
     }
 }
 
+template <typename T, typename Predicate>
+ArrayList<T*>* Filter(ArrayList<T*>* source, Predicate predicate) {
+    ArrayList<T*>* result = new ArrayList<T*>();
+    
+    if (source) {
+        for (size_t i = 0; i < source->Count(); ++i) {
+            T* item = source->Get(i);
+            if (predicate(item)) {
+                result->Add(item);
+            }
+        }
+    }
+    return result;
+}
+
 }
 
 #endif /* AppHelpers_h */
