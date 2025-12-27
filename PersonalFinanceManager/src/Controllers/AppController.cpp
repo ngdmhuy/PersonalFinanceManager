@@ -35,6 +35,25 @@ const std::string FILE_RECURRING = "data/recurring.bin";
 
 using namespace AppHelpers;
 
+// Autosave
+
+void AppController::AutoSaveWorker() {
+    while (!stopAutoSave) {
+        // Sleep for 60 seconds (checking stop flag every second)
+        for (int i = 0; i < 60; ++i) {
+            if (stopAutoSave) return;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+
+        // Perform Save
+        if (view) view->ShowInfo("[AutoSave] Saving data...");
+        
+        // Lock before saving
+        std::lock_guard<std::recursive_mutex> lock(dataMutex);
+        SaveData();
+    }
+}
+
 // --- [HELPER] Indexing Logic ---
 
 void AppController::AddTransactionToIndex(Transaction* t) {
@@ -96,9 +115,16 @@ AppController::AppController(ConsoleView* v) : view(v) {
     }
     
     ProcessRecurringTransactions();
+    
+    stopAutoSave = false;
+    autoSaveThread = std::thread(&AppController::AutoSaveWorker, this);
 }
 
 AppController::~AppController() {
+    stopAutoSave = true;
+    if (autoSaveThread.joinable()) {
+        autoSaveThread.join();
+    }
     // Save state before closing
     SaveData();
     
@@ -126,6 +152,7 @@ AppController::~AppController() {
 // ==========================================
 
 void AppController::SaveData() {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     // --- [UPDATE] Sort before saving ---
     // Sort transactions by date so next load is already sorted
     transactions->Sort(CompareTransactionsByDate);
@@ -155,6 +182,7 @@ void AppController::LoadData() {
 // ==========================================
 
 void AppController::AddWallet(const std::string& name, double initialBalance) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     if (IsStringEmptyOrWhitespace(name)) {
         if (view) view->ShowError("Wallet creation failed: Name cannot be empty.");
         return;
@@ -199,6 +227,7 @@ double AppController::GetTotalBalance() const {
 // ==========================================
 
 void AppController::AddCategory(const std::string& name) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     if (IsStringEmptyOrWhitespace(name)) {
         if (view) view->ShowError("Category name cannot be empty.");
         return;
@@ -223,6 +252,7 @@ Category* AppController::GetCategoryById(const std::string& id) {
 }
 
 void AppController::AddIncomeSource(const std::string& name) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     if (IsStringEmptyOrWhitespace(name)) {
         if (view) view->ShowError("Source name cannot be empty.");
         return;
@@ -251,6 +281,7 @@ IncomeSource* AppController::GetIncomeSourceById(const std::string& id) {
 // ==========================================
 
 void AppController::AddTransaction(double amount, std::string walletId, std::string categoryOrSourceId, TransactionType type, Date date, std::string description) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     if (amount <= 0) {
         if (view) view->ShowError("Transaction amount must be positive.");
         return;
@@ -301,6 +332,7 @@ void AppController::AddTransaction(double amount, std::string walletId, std::str
 }
 
 bool AppController::DeleteTransaction(const std::string& transactionId) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     int foundIndex = -1;
     Transaction* target = nullptr;
 
@@ -341,6 +373,7 @@ bool AppController::DeleteTransaction(const std::string& transactionId) {
 // ==========================================
 
 void AppController::AddRecurringTransaction(Frequency freq, Date startDate, Date endDate, std::string walletId, std::string categoryId, double amount, TransactionType type, std::string desc) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     if (endDate.IsValid() && startDate > endDate) {
         if (view) view->ShowError("Invalid Date Range: Start > End.");
         return;
@@ -376,6 +409,7 @@ RecurringTransaction* AppController::GetRecurringById(const std::string& id) {
 }
 
 bool AppController::DeleteRecurringTransaction(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     RecurringTransaction* r = GetRecurringById(id);
     if (r == nullptr) {
         if (view) view->ShowError("Recurring transaction ID not found: " + id);
@@ -403,6 +437,7 @@ bool AppController::DeleteRecurringTransaction(const std::string& id) {
 }
 
 void AppController::EditRecurringTransaction(const std::string& id, Frequency freq, Date startDate, Date endDate, std::string walletId, std::string categoryId, double amount, TransactionType type, std::string desc) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     RecurringTransaction* r = GetRecurringById(id);
     if (r == nullptr) {
         if (view) view->ShowError("Recurring transaction ID not found: " + id);
@@ -438,6 +473,7 @@ void AppController::EditRecurringTransaction(const std::string& id, Frequency fr
 }
 
 void AppController::ProcessRecurringTransactions() {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     Date today = Date::GetTodayDate();
     int generatedCount = 0;
 
@@ -450,16 +486,19 @@ void AppController::ProcessRecurringTransactions() {
             Wallet* w = GetWalletById(rt->GetWalletId());
             if (w == nullptr) break;
             
+            Date dueDate = rt->GetNextDueDate();
+            
             std::string prefix = EnumHelper::IdPrefixToString(IdPrefix::Transaction);
             std::string newTransId;
             do {
                 newTransId = IdGenerator::GenerateId(prefix);
             } while (transactionsMap->ContainsKey(newTransId));
             
-            Transaction* autoTrans = rt->GenerateTransaction(newTransId, rt->GetNextDueDate());
+            Transaction* autoTrans = rt->GenerateTransaction(newTransId, dueDate); // Set last gen date inside
             
             size_t pos = GetSortedInsertIndex(transactions, autoTrans->GetDate());
             transactions->Insert(pos, autoTrans);
+            transactionsMap->Put(newTransId, autoTrans);
             AddTransactionToIndex(autoTrans);
             
             if (rt->GetType() == TransactionType::Income) {
@@ -468,7 +507,6 @@ void AppController::ProcessRecurringTransactions() {
                 w->SubtractAmount(rt->GetAmount());
             }
             
-            rt->SetLastGeneratedDate(rt->GetNextDueDate());
             ++generatedCount;
             if (view) view->ShowSuccess("Generated: " + rt->GetDescription() + " (" + std::to_string(static_cast<long long>(rt->GetAmount())) + ")");
         }
@@ -530,6 +568,7 @@ ArrayList<Transaction*>* AppController::GetTransactionsByDateRange(Date start, D
 // ---------------------------------------------------------
 
 void AppController::EditWallet(const std::string& id, const std::string& newName) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     Wallet* w = GetWalletById(id);
     if (w == nullptr) {
         if (view) view->ShowError("Wallet ID not found: " + id);
@@ -546,6 +585,7 @@ void AppController::EditWallet(const std::string& id, const std::string& newName
 }
 
 bool AppController::DeleteWallet(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     Wallet* w = GetWalletById(id);
     if (w == nullptr) {
         if (view) view->ShowError("Wallet ID not found.");
@@ -589,6 +629,7 @@ bool AppController::DeleteWallet(const std::string& id) {
 // ---------------------------------------------------------
 
 bool AppController::DeleteCategory(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     for (size_t i = 0; i < transactions->Count(); ++i) {
         Transaction* t = transactions->Get(i);
         if (t->GetType() == TransactionType::Expense) {
@@ -627,6 +668,7 @@ bool AppController::DeleteCategory(const std::string& id) {
 }
 
 void AppController::EditCategory(const std::string& id, const std::string& newName) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     Category* c = GetCategoryById(id);
     if (!c) { if (view) view->ShowError("Category ID not found."); return; }
     if (IsStringEmptyOrWhitespace(newName)) { if (view) view->ShowError("Category name cannot be empty."); return; }
@@ -635,6 +677,7 @@ void AppController::EditCategory(const std::string& id, const std::string& newNa
 }
 
 void AppController::EditIncomeSource(const std::string& id, const std::string& newName) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     IncomeSource* s = GetIncomeSourceById(id);
     if (!s) { if (view) view->ShowError("Source ID not found."); return; }
     if (IsStringEmptyOrWhitespace(newName)) { if (view) view->ShowError("Source name cannot be empty."); return; }
@@ -644,6 +687,7 @@ void AppController::EditIncomeSource(const std::string& id, const std::string& n
 }
 
 bool AppController::DeleteIncomeSource(const std::string& id) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     for (size_t i = 0; i < transactions->Count(); ++i) {
         Transaction* t = transactions->Get(i);
         if (t->GetType() == TransactionType::Income) {
@@ -686,6 +730,7 @@ bool AppController::DeleteIncomeSource(const std::string& id) {
 // ---------------------------------------------------------
 
 bool AppController::EditTransaction(const std::string& id, double newAmount, Date newDate, std::string newDesc) {
+    std::lock_guard<std::recursive_mutex> lock(dataMutex);
     if (newAmount <= 0) {
         if (view) view->ShowError("Amount must be positive.");
         return false;

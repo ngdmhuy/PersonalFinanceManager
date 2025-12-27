@@ -9,6 +9,9 @@
 #define AppController_h
 
 #include <string>
+#include <thread>
+#include <mutex>
+#include <atomic>
 
 #include "Utils/ArrayList.h"
 #include "Utils/HashMap.h"
@@ -24,6 +27,13 @@ class IncomeSource;
 
 class AppController {
 private:
+    // Threading components
+    std::recursive_mutex dataMutex; // Recursive allows locking multiple times in one thread
+    std::thread autoSaveThread;
+    std::atomic<bool> stopAutoSave;
+
+    void AutoSaveWorker();
+    
     // --- UI Messaging ---
     ConsoleView* view;
 
