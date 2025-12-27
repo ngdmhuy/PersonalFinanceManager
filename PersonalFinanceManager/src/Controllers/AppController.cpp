@@ -58,13 +58,18 @@ void AppController::AutoSaveWorker() {
 
 void AppController::ShowAutoSaveIndicator() {
     if (view) {
-        view->MoveToXY(50, 2);
+        // Save Position
+        view->SaveCursor();
         
+
+        // Print Status
+        view->MoveToXY(60, 1);
         view->SetColor(ConsoleView::COLOR_SUCCESS);
-        std::cout << "[ Auto-Saving... ]" << std::flush;
+        std::cout << "[ Auto-Saved ]" << std::flush;
         view->ResetColor();
 
-        view->MoveToXY(0, 20);
+        // Restore Position
+        view->RestoreCursor();
     }
 }
 

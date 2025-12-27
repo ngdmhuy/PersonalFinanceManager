@@ -30,6 +30,12 @@ public:
     /// @param x Horizontal position (column) from left edge (0 = leftmost)
     /// @param y Vertical position (row) from top edge (0 = topmost)
     void MoveToXY(int x, int y);
+    
+    /// @brief Save the current cursor
+    void SaveCursor();
+    
+    /// @brief Restore the saved cursor
+    void RestoreCursor();
 
     /// @brief Changes console text color and background
     /// @param color Color code (0-15): 0=Black, 7=White, 10=LightGreen, 12=LightRed

@@ -11,6 +11,8 @@
 #include <conio.h>
 #include <windows.h>
 
+static COORD savedCursorPos = {0, 0};
+
 inline void ClearScreen() {
     system("cls");
 }
@@ -22,6 +24,17 @@ inline int GetKeyPress() {
 inline void MoveCursor(int x, int y) {
     COORD coord = {(SHORT)x, (SHORT)y};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+
+inline void SaveCursorPosition() {
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+        savedCursorPos = csbi.dwCursorPosition;
+    }
+}
+
+inline void RestoreCursorPosition() {
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), savedCursorPos);
 }
 
 inline void SetConsoleColor(int color) {
@@ -65,6 +78,14 @@ inline int GetKeyPress() {
 inline void MoveCursor(int x, int y) {
     // ANSI: \033[<row>;<col>H (1-based)
     std::cout << "\033[" << (y + 1) << ";" << (x + 1) << "H";
+}
+
+inline void SaveCursorPosition() {
+    std::cout << "\0337" << std::flush;
+}
+
+inline void RestoreCursorPosition() {
+    std::cout << "\0338" << std::flush;
 }
 
 inline void SetConsoleColor(int color) {

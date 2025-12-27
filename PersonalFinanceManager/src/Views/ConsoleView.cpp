@@ -12,6 +12,13 @@ void ConsoleView::MoveToXY(int x, int y) {
     MoveCursor(x, y);
 }
 
+void ConsoleView::SaveCursor() {
+    SaveCursorPosition();
+}
+
+void ConsoleView::RestoreCursor() {
+    RestoreCursorPosition();
+}
 
 void ConsoleView::SetColor(int color) {
     SetConsoleColor(color);
