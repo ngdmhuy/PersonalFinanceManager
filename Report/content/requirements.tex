@@ -5,7 +5,7 @@ The system was designed to strictly adhere to the functional specifications outl
 \subsection{Functional Requirements}
 
 \subsubsection{Transaction Management}
-The core function of the application is to record and manage financial activities with precision \cite{project_spec}.
+The core function of the application is to record and manage financial activities with precision.
 \begin{itemize}
     \item \textbf{Income Recording:} Users can log earnings by specifying the Date, Amount, Wallet, and an \textbf{Income Source} (e.g., Salary, Bonus).
     \item \textbf{Expense Recording:} Users can log expenditures by linking them to a \textbf{Category} (e.g., Food, Rent) and a specific Wallet.
@@ -30,7 +30,7 @@ The application provides tools to analyze financial health:
 \subsection{Non-Functional Requirements}
 
 \subsubsection{Technical Constraints (No STL)}
-As a primary academic challenge, the use of the **Standard Template Library (STL)** was strictly prohibited for data containers.
+As a primary academic challenge, the use of the \textbf{Standard Template Library (STL)} was strictly prohibited for data containers.
 \begin{itemize}
     \item \textbf{Implementation:} We replaced \texttt{std::vector} and \texttt{std::map} with custom-built \texttt{ArrayList<T>} and \texttt{HashMap<K,V>} classes using manual dynamic memory allocation.
 \end{itemize}
@@ -44,6 +44,6 @@ As a primary academic challenge, the use of the **Standard Template Library (STL
 \subsubsection{Cross-Platform Compatibility}
 The application is designed to function identically on different operating systems:
 \begin{itemize}
-    \item \textbf{Windows:} Compiled via MinGW or Visual Studio (`run_windows.bat`).
-    \item \textbf{macOS/Linux:} Compiled via Clang/GCC (`run_mac.command`).
+    \item \textbf{Windows:} Compiled via MinGW or Visual Studio (`run\_windows.bat`).
+    \item \textbf{macOS/Linux:} Compiled via Clang/GCC (`run\_mac.command`).
 \end{itemize}
