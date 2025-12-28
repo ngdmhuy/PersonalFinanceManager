@@ -63,3 +63,8 @@ cmake --build . --config Release
 - Run the produced executable from the build directory, or use `run_windows.bat` on Windows or `run_mac.command` on macOS.
 
 ---
+
+## 📹 Demo Video
+- Demo video link: https://www.youtube.com/watch?v=hVvAY_DrcDo
+
+---

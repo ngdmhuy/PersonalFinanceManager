@@ -9,20 +9,24 @@
     This separation keeps the UI lightweight and makes core logic easier to unit test without requiring console interaction.
 
     % High-level architecture diagram
-    \begin{center}
-    \begin{tikzpicture}[node distance=8mm, font=\small, auto, >=Stealth]
-        \tikzset{layer/.style={rectangle, draw, rounded corners, align=center, minimum width=86mm, minimum height=8mm, fill=white}}
+\begin{center}
+    \begin{tikzpicture}[node distance=10mm and 50mm, font=\small, auto, >=Stealth]
+        \tikzset{layer/.style={rectangle, draw, rounded corners, align=center, minimum width=32mm, minimum height=10mm, fill=white}}
 
-        \node[layer] (views) {\textbf{Views}\\ConsoleView, Menus, DashBoard, InputValidator};
-        \node[layer, below=of views] (controllers) {\textbf{Controllers}\\NavigationController, AppController (business logic)};
-        \node[layer, below=of controllers] (models) {\textbf{Models}\\Transaction, Wallet, Category, IncomeSource, RecurringTransaction};
-        \node[layer, below=of models] (persistence) {\textbf{Persistence / Utilities}\\BinaryFileHelper, IdGenerator, Date, HashMap};
+        \node[layer] (views) {\textbf{Views}\\ConsoleView\\Menus, Dashboard};
+        \node[layer, below=6mm of views] (controllers) {\textbf{Controllers}\\NavigationController\\AppController};
+        \node[layer, below=6mm of controllers] (models) {\textbf{Models}\\Transaction\\Wallet, Category};
 
-        \draw[-{Stealth}] (views) -- (controllers);
-        \draw[-{Stealth}] (controllers) -- (models);
-        \draw[-{Stealth}] (models) -- (persistence);
-        \draw[-{Stealth}] (controllers.east) .. controls +(14mm,0) and +(14mm,0) .. (persistence.east) node[midway, right, font=\scriptsize] {save / load};
+        \node[layer, right=of controllers] (utils) {\textbf{Persistence / Utilities}\\BinaryFileHelper\\IdGenerator, Date\\HashMap};
+
+        \draw[<->, thick] (views.south) -- ++(0,-2mm) -- (controllers.north);
+        \draw[<->, thick] (controllers.south) -- ++(0,-2mm) -- (models.north);
+
+        \draw[-{Stealth}, thick] (views) -- (utils);
+        \draw[-{Stealth}, thick] (controllers) -- (utils);
+        \draw[-{Stealth}, thick] (models) -- (utils);
     \end{tikzpicture}
+\end{center}
 
-    \vspace{1mm}\small\textbf{Figure:} High-level layered architecture (Views → Controllers → Models → Persistence)
+\begin{center}  \vspace{1mm}\small\textbf{Figure:} High-level layered architecture (Views → Controllers → Models → Persistence)
     \end{center}
