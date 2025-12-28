@@ -13,25 +13,18 @@
     \begin{tikzpicture}[node distance=10mm and 50mm, font=\small, auto, >=Stealth]
         \tikzset{layer/.style={rectangle, draw, rounded corners, align=center, minimum width=32mm, minimum height=10mm, fill=white}}
 
-        % Left column (vertical stack)
         \node[layer] (views) {\textbf{Views}\\ConsoleView\\Menus, Dashboard};
         \node[layer, below=6mm of views] (controllers) {\textbf{Controllers}\\NavigationController\\AppController};
         \node[layer, below=6mm of controllers] (models) {\textbf{Models}\\Transaction\\Wallet, Category};
 
-        % Right side (centered vertically)
         \node[layer, right=of controllers] (utils) {\textbf{Persistence / Utilities}\\BinaryFileHelper\\IdGenerator, Date\\HashMap};
 
-        % Longer vertical two-way arrows (left column)
         \draw[<->, thick] (views.south) -- ++(0,-2mm) -- (controllers.north);
         \draw[<->, thick] (controllers.south) -- ++(0,-2mm) -- (models.north);
 
-        % One-way arrows to Utils (right-pointing only)
         \draw[-{Stealth}, thick] (views) -- (utils);
         \draw[-{Stealth}, thick] (controllers) -- (utils);
         \draw[-{Stealth}, thick] (models) -- (utils);
-
-        % Save/load label
-        \node[font=\scriptsize, right=3mm of controllers] {save / load};
     \end{tikzpicture}
 \end{center}
 
