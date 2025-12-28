@@ -1,51 +1,111 @@
 \section{System Implementation Details}
 
-\subsection{Data Modeling \& Class Design}
-The application utilizes a strict Object-Oriented design to represent financial entities. The data model is divided into three distinct categories: Core Transactions, Automation Templates, and Master Data.
+This section details the implementation of the core application logic, focusing on data modeling, utilities, and the AI handling.
 
-\subsubsection{Transaction Hierarchy (Polymorphism)}
-The core of the system is the \texttt{Transaction} family, designed to treat Incomes and Expenses uniformly while allowing for specific behaviors.
+\subsection{Utilities: ID Generation}
+To ensure referential integrity across the system without relying on fragile memory pointers, every entity (Transaction, Wallet, Category, etc) is assigned a unique string identifier.
+
+\subsubsection{Implementation Strategy}
+We implemented a custom \texttt{IdGenerator} class to handle unique key creation.
 
 \begin{itemize}
-    \item \textbf{Base Class (\texttt{Transaction}):} An abstract class that encapsulates shared attributes:
-    \begin{itemize}
-        \item \texttt{id} (String): Unique UUID for the record.
-        \item \texttt{amount} (Double): The monetary value.
-        \item \texttt{date} (\texttt{Date}): Custom date object for chronological sorting.
-        \item \texttt{walletId} (String): Foreign key linking to a specific Wallet.
-    \end{itemize}
-    \item \textbf{Derived Class (\texttt{Income}):} Inherits from \texttt{Transaction}.
-    \item \textbf{Derived Class (\texttt{Expense}):} Inherits from \texttt{Transaction}.
-    \item \textbf{Design Rationale:} By using inheritance, we can store all records in a single container (\texttt{ArrayList<Transaction*>}). This simplifies global operations like "Calculate Total Balance" or "Sort by Date," as the system iterates through one list rather than two separate ones.
+    \item \textbf{Algorithm:} The generator utilizes the \textbf{Mersenne Twister 19937} engine (\texttt{std::mt19937}), seeded by a non-deterministic random device (\texttt{std::random\_device}). This ensures a uniform distribution and minimizes the risk of ID collisions.
+    \item \textbf{Format:} IDs are generated in a human-readable format: \texttt{PREFIX-XXXX-XXXX-XXXX}. 
+    \item \textbf{Composition:} The random blocks consist of alphanumeric characters (A-Z, a-z, 0-9), selected from a charset of size 62.
 \end{itemize}
 
-\subsubsection{Automation Model (\texttt{RecurringTransaction})}
-This class operates independently from the main transaction list. It acts as a "Factory" or "Template."
+\subsubsection{Role in Data Modeling}
+As illustrated in Figure \ref{fig:schema}, these IDs serve as the backbone of our relational model.
 \begin{itemize}
-    \item \textbf{Attributes:} Stores scheduling logic (\texttt{Frequency}, \texttt{StartDate}, \texttt{EndDate}) and a snapshot of the transaction data to be created.
-    \item \textbf{Behavior:} It contains a \texttt{GenerateTransaction()} method. When the \texttt{AppController} detects a due date, this method instantiates a new concrete \texttt{Income} or \texttt{Expense} object, effectively cloning the template into a real record.
+    \item \textbf{Primary Keys:} Every \texttt{transactions} and \texttt{wallets} record holds a unique \texttt{id} field.
+    \item \textbf{Foreign Keys:} Relationships are maintained by storing string references (e.g., \texttt{walletId}) rather than memory pointers. This allows the system to serialize data to binary files safely without complex pointer swizzling.
+\end{itemize}
+
+\subsection{Data Modeling \& Entity Relationships}
+The system utilizes a relational design pattern adapted for object-oriented programming. As shown in Figure \ref{fig:schema}, the data model relies on unique string identifiers (UUIDs) to maintain relationships between entities, avoiding the complexity and risks of raw memory pointers.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{Report/img/UMLdiagram.png}
+    \caption{Entity Relationship Diagram}
+    \label{fig:schema}
+\end{figure}
+
+\subsubsection{Core Transactions}
+The \texttt{transactions} entity represents the central ledger of the application. It utilizes a polymorphic design to handle both inflows and outflows.
+\begin{itemize}
+    \item \textbf{Common Attributes:} All records share standard financial data:
+    \begin{itemize}
+        \item \texttt{id}: The unique primary key.
+        \item \texttt{walletId}: A foreign key linking the transaction to a specific \texttt{Wallet}.
+        \item \texttt{amount}: The monetary value.
+        \item \texttt{date}: The timestamp of the transaction.
+        \item \texttt{type}: A discriminator string ("Income" or "Expense").
+    \end{itemize}
+    \item \textbf{Classification References:} Depending on the transaction type, the record links to a specific classification entity:
+    \begin{itemize}
+        \item \textbf{Expenses:} Utilize the \texttt{categoryId} foreign key to link to the \texttt{categories} table.
+        \item \textbf{Incomes:} Utilize the \texttt{incomeSourceId} foreign key to link to the \texttt{income\_sources} table.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Automation Model (Recurring Transactions)}
+The \texttt{recurring\_transactions} entity serves as a "Blueprint" for future data generation.
+\begin{itemize}
+    \item \textbf{Scheduling Logic:} Unlike standard transactions, this entity includes frequency data (\texttt{frequency}, \texttt{startDate}, \texttt{endDate}) and tracking state (\texttt{lastGeneratedDate}).
+    \item \textbf{Independence:} These records do not affect wallet balances directly. Instead, the system polls these blueprints upon startup to generate concrete \texttt{transactions} when due dates are reached.
 \end{itemize}
 
 \subsubsection{Master Data Entities}
-These distinct classes serve as reference data for validation and categorization.
+The system maintains three lightweight reference entities to enforce data validation.
 \begin{itemize}
-    \item \textbf{\texttt{Wallet}:} Represents a storage location. It maintains a mutable \texttt{balance} attribute that is updated whenever a transaction is added or removed.
-    \item \textbf{\texttt{Category}:} Represents expense classifications (e.g., "Food", "Rent").
-    \item \texttt{\textbf{IncomeSource}:} Represents income origins (e.g., "Salary", "Bonus").
+    \item \textbf{Wallets:} Stores the current \texttt{balance} and account \texttt{name}.
+    \item \textbf{Categories:} Defines expense classifications (e.g., "Food", "Rent").
+    \item \textbf{Income Sources:} Defines income origins (e.g., "Salary", "Dividends").
 \end{itemize}
 
 \subsection{Binary Persistence Engine}
-To meet the requirement for binary storage[cite: 70], we developed the \texttt{BinaryFileHelper} utility.
+To meet the requirement of preserving data across sessions, we implemented a custom serialization engine (\texttt{BinaryFileHelper}). This module handles the low-level translation of C++ objects into a binary stream.
+
+\subsubsection{Generic Serialization Templates}
+To avoid repetitive code, we implemented generic wrapper functions for reading and writing primitive types.
+
 \begin{itemize}
-    \item \textbf{Serialization:} Data is written directly as bytes using \texttt{ofstream::write}. Variable-length strings are prefixed with a size header to ensure correct reading.
-    \item \textbf{The Factory Pattern:} A significant challenge was deserializing polymorphic objects. We solved this by writing a "Type Identifier" (Integer) before each object in the file. During reading, the \texttt{Transaction::FromBinary} factory method reads this ID first and dynamically instantiates the correct subclass (\texttt{Income} or \texttt{Expense}).
+    \item \textbf{Template Approach:} We utilized \texttt{template<typename T>} functions to handle standard data types (\texttt{int}, \texttt{double}, \texttt{bool}). These functions cast the memory address of variables to \texttt{char*} and write them directly to the \texttt{std::ofstream} buffer.
+    \item \textbf{String Handling:} Variable-length strings (such as descriptions) pose a challenge in binary files. We solved this by first writing the length of the string (\texttt{size\_t}) as a header, followed immediately by the character data. This allows the reader to know exactly how many bytes to extract during deserialization.
 \end{itemize}
 
-\subsection{Cross-Platform Compatibility}
-As a console application, ensuring consistent behavior across Windows and macOS was a priority.
+\subsubsection{Persistence Strategy: Snapshots vs. In-Place Editing}
+A significant engineering decision involved how to handle updates (e.g., editing a transaction).
 \begin{itemize}
-    \item \textbf{Build System:} We utilized \textbf{CMake} to abstract compiler differences. We provided a \texttt{.bat} script for Windows (auto-detecting MinGW or Visual Studio) and a \texttt{.command} script for macOS (using Clang/Make).
-    \item \textbf{Terminal Abstraction:} We implemented a \texttt{PlatformUtils} module. It uses preprocessor directives (\texttt{\#ifdef \_WIN32}) to switch between Windows API commands (e.g., \texttt{cls}) and POSIX commands (e.g., ANSI escape codes) for clearing the screen and handling unbuffered input.
+    \item \textbf{The Problem:} Implementing "In-Place" editing in a binary file is highly complex. Changing a description from "Food" (4 bytes) to "Groceries" (9 bytes) would require shifting all subsequent bytes in the file, which is error-prone and slow.
+    \item \textbf{The Solution (Snapshotting):} Instead of modifying specific bytes, we adopted a \textbf{"Full Rewrite" strategy}. Whenever data is saved, the system rewrites the entire \texttt{transactions.bin} file from scratch using the current memory state.
+\end{itemize}
+
+\subsubsection{Integration with Auto-Save}
+Because rewriting the entire file can be computationally expensive (relative to a single byte update), we offloaded this task to the background thread mentioned in the \textbf{Technical Core} section.
+\begin{itemize}
+    \item \textbf{Frequency:} The \texttt{AutoSaveWorker} triggers this "Snapshot" process every 60 seconds.
+    \item \textbf{Benefit:} This ensures that the expensive I/O operation never blocks the user interface (Main Thread), while still guaranteeing that the disk storage is never more than one minute behind the live data.
+\end{itemize}
+
+\subsection{Cross-Platform Infrastructure}
+Making a console application run smoothly on both Windows and macOS is surprisingly difficult. While the logical C++ code is the same, the "Terminal" itself behaves very differently on each operating system. We built a translation layer to bridge this gap.
+
+\subsubsection{The Problem: "Speaking Different Languages"}
+Simple commands like "Clear Screen" or "Wait for Key Press" are not standard in C++.
+\begin{itemize}
+    \item \textbf{Windows} uses specific system commands (like \texttt{cls}).
+    \item \textbf{macOS/Linux} relies on special text codes (ANSI escape sequences).
+\end{itemize}
+
+\textbf{Our Solution:} We created a \texttt{PlatformUtils} file that acts as a translator. It checks which OS is running and automatically chooses the correct command, so the rest of our app doesn't have to worry about it.
+
+\subsubsection{One-Click Build Scripts}
+We didn't want users to memorize complex compilation commands. We wrote simple scripts for each OS:
+\begin{itemize}
+    \item \textbf{Windows:} \texttt{run\_windows.bat} (Detects compiler and builds).
+    \item \textbf{macOS:} \texttt{run\_mac.command} (Sets permissions and runs).
 \end{itemize}
 
 \subsection{UI Techniques}
