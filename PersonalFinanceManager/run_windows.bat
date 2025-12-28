@@ -9,41 +9,26 @@ echo ==================================================
 echo      BUILDING: PERSONAL FINANCE MANAGER
 echo ==================================================
 
-:: 2. CLEANUP
-if exist build\CMakeCache.txt (
-    echo [INFO] Cleaning up previous failed build configuration...
-    del /f /q build\CMakeCache.txt
-)
+:: 2. CLEANUP (Optional: Remove specific cache if needed, but keeping build folder is faster)
 if not exist build mkdir build
 cd build
 
 :: 3. AUTO-DETECT COMPILER
-:: Check if the user has MinGW (g++) installed
 where g++ >nul 2>nul
 if %errorlevel% equ 0 (
     echo [DETECTED] MinGW / G++ Compiler found.
-    echo [INFO] configuring for MinGW Makefiles...
+    echo [INFO] Configuring for MinGW Makefiles...
     cmake -G "MinGW Makefiles" ..
 ) else (
     echo [DETECTED] No MinGW found. Assuming Visual Studio.
     echo [INFO] Configuring for Visual Studio...
-    :: We let CMake pick the newest Visual Studio version automatically
     cmake ..
 )
 
 :: 4. CHECK CONFIGURATION STATUS
 if %errorlevel% neq 0 (
-    echo.
-    echo ==============================================================
-    echo [CRITICAL ERROR] NO C++ COMPILER FOUND!
-    echo ==============================================================
-    echo CMake cannot find Visual Studio or MinGW on this computer.
-    echo.
-    echo TO FIX THIS:
-    echo 1. Install "Visual Studio Community" (Free).
-    echo 2. During install, check "Desktop development with C++".
-    echo    (Just installing VS is not enough, you need the C++ tools!)
-    echo.
+    echo [CRITICAL ERROR] CMake configuration failed.
+    echo Ensure you have Visual Studio C++ workload OR MinGW installed.
     pause
     exit /b
 )
@@ -72,6 +57,8 @@ if exist "Release\PersonalFinanceManager.exe" (
         PersonalFinanceManager.exe
     ) else (
         echo [ERROR] Could not find executable file.
+        echo Checked: build\Release\PersonalFinanceManager.exe
+        echo Checked: build\PersonalFinanceManager.exe
     )
 )
 
