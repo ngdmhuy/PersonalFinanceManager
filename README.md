@@ -35,9 +35,6 @@ Key source areas:
 ## 🛠 Requirements
 
 - C++ toolchain (C++17+), CMake
-- For building the PDF report: TeX distribution (TeX Live / MiKTeX) with `tikz` and `svg` packages; `latexmk` recommended
-- Optional: Python + Pillow for automated screenshot generation
-- Optional: Inkscape (if using `svg` package and converting SVGs during LaTeX builds via `--shell-escape`)
 
 ---
 
@@ -52,7 +49,7 @@ mkdir build
 cd build
 cmake ..
 cmake --build . --config Release
-# then run the executable produced (name may be PersonalFinanceManager or similar)
+
 ```
 
 ### Running
@@ -67,22 +64,6 @@ cmake --build . --config Release
 
 ---
 
-## 📄 Report (LaTeX)
-
-- The project report is in `Report/`. The main file is `Report/main.tex` and M3 content is in `Report/content/M3.tex`.
-- To build the PDF (recommended with `latexmk`):
-```bash
-cd Report
-latexmk -pdf -shell-escape main.tex
-```
-- If you prefer `pdflatex` directly and the document uses `svg` conversion, run with `--shell-escape` and ensure `inkscape` is available:
-```bash
-pdflatex --shell-escape main.tex
-pdflatex --shell-escape main.tex
-```
-
----
-
 ## 🧭 Useful file references
 
 - UI / Views: `include/Views/*`, `src/Views/*`
@@ -90,19 +71,5 @@ pdflatex --shell-escape main.tex
 - Models: `src/Models/*`
 - Utilities: `src/Utils/*`
 - Report: `Report/main.tex`, `Report/content/M3.tex`
-
----
-
-## 🤝 Contributing
-
-Feel free to open issues / PRs to:
-- Add unit tests
-- Enhance UI flows (better pagination, multi-line inputs)
-
----
-
-## ⚖️ License
-
-No license is specified. Add a `LICENSE` file if you want to set an explicit license (MIT/Apache/etc.).
 
 ---
