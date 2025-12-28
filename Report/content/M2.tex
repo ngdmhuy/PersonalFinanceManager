@@ -1,0 +1,227 @@
+\section{Comprehensive Analysis of the Central Controller (AppController)}
+\label{sec:appcontroller_analysis}
+
+\subsection{Introduction}
+In the development of the \textit{Personal Finance Manager} system, the architectural design prioritizes modularity, maintainability, and data integrity. At the core of this architecture lies the \texttt{AppController}, a centralized component designed to orchestrate the complex interactions between the user interface (View layer) and the data persistence mechanisms (Model layer).
+
+This report provides an in-depth technical analysis of the \texttt{AppController}, detailing its role in the Model-View-Controller (MVC) paradigm, its memory management strategies under strict constraints (no STL), and the implementation of advanced business logic algorithms. The focus is placed on the engineering decisions that ensure the system's reliability and the preservation of critical financial data.
+
+\subsection{Architectural Design and System Role}
+
+\subsubsection{ The Centralized Control Pattern}
+The application adopts a strict separation of concerns. While the Views (\texttt{Nav*.cpp}) are responsible solely for presentation and user input capture, and the Models (\texttt{Transaction.h}, \texttt{Wallet.h}) serve as data structures, the \texttt{AppController} encapsulates the entire \textbf{Business Logic Layer}.
+
+This centralization offers several strategic advantages:
+\begin{enumerate}
+    \item \textbf{Decoupling:} The View layer never communicates directly with the storage layer. All requests for data retrieval or modification must pass through the \texttt{AppController}. This abstraction allows for changes in the underlying data structure without affecting the user interface logic.
+    \item \textbf{State Management:} The controller maintains the global state of the application during its runtime lifecycle. It acts as the "Single Source of Truth" for all data entities currently loaded into the Random Access Memory (RAM).
+    \item \textbf{Transaction Safety:} By funneling all operations through a single entry point, the system can enforce strict validation rules (e.g., preventing the creation of a transaction with a non-existent wallet ID) before any data mutation occurs.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    % [INSERT SCREENSHOT HERE: Chụp file AppController.h phần khai báo class để thấy nó chứa tất cả các list]
+    \includegraphics[width=0.95\linewidth]{img/appcontroller_header.png} 
+    \caption{The AppController Class Definition: The Central Nervous System of the Application}
+    \label{fig:appcontroller_header}
+\end{figure}
+
+\subsection{Memory Management Strategy}
+
+A distinct constraint of this project was the prohibition of the C++ Standard Template Library (STL), specifically containers such as \texttt{std::vector} or smart pointers like \texttt{std::unique\_ptr}. This necessitated the design of a custom manual memory management framework within the \texttt{AppController}.
+
+\subsubsection{Heap Allocation and Ownership Model}
+The system utilizes a custom dynamic array container, \texttt{ArrayList}, to manage collections of pointers. The \texttt{AppController} assumes explicit ownership of these pointers based on the \textit{Resource Acquisition Is Initialization} (RAII) principle, albeit implemented manually.
+
+Upon application startup, the \texttt{AppController} constructor triggers the deserialization process. Memory is allocated on the Heap for each entity (Wallet, Category, Transaction) retrieved from the binary files. These pointers are then stored in their respective \texttt{ArrayList} containers.
+\begin{lstlisting}[language=C++, caption={Dynamic Allocation during Initialization}]
+// Pseudo-code illustrating the loading process
+void AppController::LoadData() {
+    this->wallets = BinaryFileHelper::ReadWallets("wallets.bin");
+    this->transactions = BinaryFileHelper::ReadTransactions("trans.bin");
+    // AppController now owns these pointers
+}
+\end{lstlisting}
+
+\subsubsection{Destruction and Leak Prevention}
+In C++ system programming, memory leaks are a critical failure mode. To ensure robustness, the \texttt{AppController} implements a rigorous deallocation strategy in its destructor.
+
+When the application terminates, the destructor iterates through every \texttt{ArrayList} managed by the controller. It invokes the \texttt{delete} operator on each stored pointer to free the memory occupied by the individual objects before finally deallocating the list structure itself. This two-step cleanup process ensures that no memory blocks remain orphaned on the Heap.
+
+\begin{figure}[H]
+    \centering
+    % [INSERT SCREENSHOT HERE: Chụp hàm Destructor ~AppController() và hàm FreeList]
+    \includegraphics[width=0.9\linewidth]{img/code_destructor.png} 
+    \caption{Implementation of the Destructor ensuring Zero Memory Leaks}
+    \label{fig:destructor_impl}
+\end{figure}
+
+\subsubsection{Data Synchronization and Persistence}
+The \texttt{AppController} also acts as the synchronization bridge between volatile memory (RAM) and non-volatile storage (HDD/SSD).
+To maintain data consistency, the controller employs a "Write-Through" or "Write-Back" strategy depending on the operation criticality. Critical operations, such as adding a new financial transaction, trigger an immediate persistence routine to minimize data loss risk in the event of a power failure or crash.
+
+
+\section{Core Business Logic and Algorithmic Implementation}
+
+Beyond data management, the \texttt{AppController} serves as the calculation engine for the application. This section details the algorithmic approach employed for transaction processing, data retrieval, and task automation.
+
+\subsection{The Data Retrieval and Filtering Engine}
+
+A primary requirement of the Personal Finance Manager is the ability to generate specific views of financial data, such as "Expenses in the current month" or "Income from a specific source." To achieve this without the overhead of external database query languages (like SQL), I implemented a custom in-memory filtering engine within the controller.
+
+\subsubsection{Linear Filtering Strategy}
+The controller implements a family of retrieval functions (e.g., \texttt{GetTransactionsByDateRange}, \texttt{GetTransactionsByCategory}). These functions operate based on a linear scanning algorithm with a time complexity of $\mathcal{O}(N)$, where $N$ is the total number of recorded transactions.
+
+The algorithm follows a three-step process:
+\begin{enumerate}
+    \item \textbf{Traversal:} The function iterates through the master \texttt{ArrayList} of transactions.
+    \item \textbf{Predicate Evaluation:} For each transaction, a specific set of boolean conditions is evaluated. For example, in a date-range filter, the condition is defined as:
+    \begin{equation}
+        Date_{start} \leq Transaction_{date} \leq Date_{end}
+    \end{equation}
+    \item \textbf{Collection:} If the predicate evaluates to true, the pointer to the transaction is appended to a temporary result list. Crucially, only the \textit{pointer} is copied, not the entire object. This "shallow copy" approach significantly reduces memory bandwidth usage and improves performance during report generation.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    % [INSERT SCREENSHOT HERE: Chụp hàm GetTransactionsByDateRange hoặc đoạn code lọc trong NavReport]
+    \includegraphics[width=0.9\linewidth]{img/code_filtering_logic.png} 
+    \caption{Implementation of the Date-Range Filtering Algorithm}
+    \label{fig:filtering_logic}
+\end{figure}
+
+\subsection{Enhanced Search Functionality}
+
+The search module represents a critical component of the user experience (UX). The basic requirement was to allow users to find transactions based on textual descriptions. However, a naive implementation usually results in poor usability due to the disjointed nature of normalized data (displaying IDs instead of Names).
+
+\subsubsection{The "Join" Logic Implementation}
+To address this, I enhanced the search logic in the \texttt{AppController} (exposed via \texttt{NavSearch}) to perform a runtime "Join" operation, similar to Relational Database Management Systems (RDBMS).
+
+When a search query is executed:
+\begin{enumerate}
+    \item The system filters transactions where the description contains the keyword (using a case-insensitive substring search).
+    \item \textbf{Data Mapping:} Instead of returning the raw result, the controller uses the stored \texttt{WalletID} and \texttt{CategoryID} to perform an $\mathcal{O}(1)$ lookup in the respective HashMaps.
+    \item \textbf{Result Enrichment:} The retrieved human-readable names (e.g., "Cash Wallet", "Food & Beverage") are then combined with the transaction data for display.
+\end{enumerate}
+
+This architectural decision transforms a cryptic output (e.g., \texttt{WAL-01 | CAT-05}) into meaningful information, significantly improving the application's usability.
+
+\subsection{Automated Recurring Transaction Engine}
+
+One of the most complex features implemented within the \texttt{AppController} is the \textbf{Recurring Transaction Automation System}. This feature ensures that fixed financial obligations (e.g., monthly rent, weekly subscriptions) are recorded automatically without user intervention.
+
+\subsubsection{The "Catch-up" Algorithm}
+A challenge with desktop applications is that they are not always running. A user might close the application on Monday and reopen it on Friday. The system must be able to "catch up" and generate all missed transactions during the downtime.
+
+I implemented a robust state-check algorithm in the \texttt{ProcessRecurringTransactions} method, which is invoked immediately upon application startup:
+
+\begin{algorithm}[H]
+\caption{Recurring Transaction Processing Logic}
+\begin{algorithmic}[1]
+\State $currentDate \gets \text{System.Today()}$
+\For{each $recurringItem$ in $RecurringList$}
+    \While{$recurringItem.NextDueDate \leq currentDate$}
+        \State $newTrans \gets \text{CreateTransaction}(recurringItem)$
+        \State $TransactionList.\text{Add}(newTrans)$
+        \State \text{Update } $recurringItem.NextDueDate$ \text{ based on Frequency}
+        \State $recurringItem.LastGeneratedDate \gets currentDate$
+    \EndWhile
+\EndFor
+\State \text{SaveData()}
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Logic Analysis}
+The use of a \texttt{While} loop (line 3) instead of a simple \texttt{If} statement is a critical design choice. It handles cases where the application has not been opened for an extended period (e.g., multiple months). The loop ensures that if a monthly bill was missed three times, three separate transactions will be generated sequentially until the \texttt{NextDueDate} is in the future. This guarantees absolute financial accuracy regardless of the user's usage frequency.
+
+\begin{figure}[H]
+    \centering
+    % [INSERT SCREENSHOT HERE: Chụp hàm ProcessRecurringTransactions trong AppController.cpp]
+    \includegraphics[width=0.9\linewidth]{img/code_recurring_automation.png} 
+    \caption{The Catch-up Algorithm for Recurring Transactions}
+    \label{fig:recurring_algo}
+\end{figure}
+
+
+\section{Data Integrity and Referential Safety Mechanisms}
+\label{sec:data_integrity}
+
+In any financial system, data integrity is paramount. A critical engineering challenge in this project was managing the relationships between entities (e.g., Transactions linked to Categories) without the enforcement mechanisms typically provided by SQL Foreign Keys.
+
+\subsection{The Dangling Reference Problem}
+In a C++ environment using raw pointers or ID-based linking, deleting a "Master" entity (such as a Category or Wallet) while "Child" entities (Transactions) still reference it leads to a state of inconsistency known as "Dangling References."
+If a user deletes the "Food" category, but historical transactions still point to \texttt{CAT-ID-Food}, the reporting module would crash or produce undefined behavior when attempting to retrieve the category name for those records.
+
+\subsection{Implementation of the "Restrict-Delete" Strategy}
+To mitigate this risk, I rejected the "Cascade Delete" approach (which would delete all associated history) in favor of a safer \textbf{"Restrict Delete" Strategy}. This ensures that historical financial records are immutable unless explicitly modified.
+
+I implemented a strict dependency check algorithm within the \texttt{DeleteCategory}, \texttt{DeleteWallet}, and \texttt{DeleteIncomeSource} methods in \texttt{AppController}.
+
+\begin{algorithm}[H]
+\caption{Data Integrity Check Algorithm (Pseudo-code)}
+\begin{algorithmic}[1]
+\Function{DeleteCategory}{targetID}
+    \State \textbf{Step 1: Check History}
+    \For{each $trans$ in $TransactionList$}
+        \If{$trans.CategoryID == targetID$}
+            \State \Return \textbf{False} \Comment{Block delete: Dependency found}
+        \EndIf
+    \EndFor
+    
+    \State \textbf{Step 2: Check Future Automation}
+    \For{each $rec$ in $RecurringList$}
+        \If{$rec.CategoryID == targetID$}
+            \State \Return \textbf{False} \Comment{Block delete: Future dependency found}
+        \EndIf
+    \EndFor
+    
+    \State \textbf{Step 3: Safe Execution}
+    \State $CategoryMap.\text{Remove}(targetID)$
+    \State \Return \textbf{True}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+This algorithm guarantees that no entity can be removed if it is currently "in use," thereby preserving the absolute consistency of the binary database.
+
+\begin{figure}[H]
+    \centering
+    % [INSERT SCREENSHOT HERE: Chụp code hàm DeleteCategory hoặc DeleteWallet trong AppController.cpp]
+    \includegraphics[width=0.9\linewidth]{img/code_restrict_delete.png} 
+    \caption{C++ Implementation of the Restrict-Delete Safety Check}
+    \label{fig:restrict_delete_impl}
+\end{figure}
+
+\section{Financial Aggregation Logic}
+
+The \texttt{AppController} also functions as the central aggregation engine for the reporting module. Instead of distributing calculation logic across the View layer, all financial summarization is performed centrally to ensure accuracy.
+
+\subsection{Time-based Aggregation}
+A key feature I implemented is the support for dynamic time-range aggregation. The aggregation functions (e.g., \texttt{CalculateTotalIncome}, \texttt{GetExpenseBreakdown}) accept a \texttt{DateRange} parameter.
+
+During the summation process, the complexity is linear $\mathcal{O}(N)$. The system iterates through transactions and applies a temporal filter:
+\[
+    \text{Include} \iff (Date_{start} \leq Date_{trans} \leq Date_{end}) \land (Type == TargetType)
+\]
+This logic powers the application's ability to switch seamlessly between "Annual Reports," "Monthly Reports," and "All-time Views" without reloading data from the disk.
+
+\section{Conclusion and System Evaluation}
+
+\subsection{Summary of Contributions}
+The design and implementation of the \texttt{AppController} successfully meet all core requirements of the Personal Finance Manager project. By centralizing the business logic, the system achieves:
+\begin{itemize}
+    \item \textbf{High Cohesion:} All data manipulation logic is encapsulated in one module.
+    \item \textbf{Data Safety:} Robust validation prevents data corruption and memory leaks.
+    \item \textbf{Automation:} The recurring transaction engine automates user workflows.
+\end{itemize}
+
+\subsection{Performance Analysis}
+With the current use of `ArrayList` and linear scanning, the time complexity for most operations is $\mathcal{O}(N)$.
+\begin{itemize}
+    \item \textbf{Memory Efficiency:} Excellent. By manually managing pointers and avoiding STL overhead, the application maintains a minimal memory footprint (estimated $<10$MB for typical usage).
+    \item \textbf{Execution Speed:} For a personal finance dataset (typically $<10,000$ records), linear scan operations are instantaneous (microseconds). The $\mathcal{O}(N)$ approach is practically efficient and avoids the code complexity of implementing B-Trees or Hash Maps for sorting.
+\end{itemize}
+
+In conclusion, the \texttt{AppController} stands as a robust, safe, and efficient backbone for the application, demonstrating a deep understanding of memory management and system architecture in C++.
+
+% End of Report

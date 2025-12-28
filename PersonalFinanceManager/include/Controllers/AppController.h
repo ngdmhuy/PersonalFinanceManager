@@ -46,14 +46,14 @@ private:
     ArrayList<Category*>* categoriesList;
     ArrayList<IncomeSource*>* incomeSourcesList;
 
-    // --- ID MAPS (O(1) Lookup) ---
+    // --- ID MAPS  ---
     HashMap<std::string, Wallet*>* walletsMap;
     HashMap<std::string, Category*>* categoriesMap;
     HashMap<std::string, IncomeSource*>* incomeSourcesMap;
     HashMap<std::string, Transaction*>* transactionsMap;
     HashMap<std::string, RecurringTransaction*>* recurringTransactionsMap;
 
-    // --- FAST INDICES (Mục lục tra cứu nhanh) ---
+    // --- FAST INDICES  ---
     // Key: ID -> Value: List of Transactions
     HashMap<std::string, ArrayList<Transaction*>*>* walletIndex;
     HashMap<std::string, ArrayList<Transaction*>*>* categoryIndex;
@@ -123,10 +123,10 @@ public:
     ArrayList<Transaction*>* GetTransactionsByWallet(const std::string& walletId);
     ArrayList<Transaction*>* GetTransactionsByCategory(const std::string& categoryId);
     
-    // [QUAN TRỌNG] Hàm này phục vụ cho NavReport phần Income By Source
+
     ArrayList<Transaction*>* GetTransactionsByIncomeSource(const std::string& sourceId);
     
     ArrayList<Transaction*>* SearchTransactions(const std::string& keyword);
 };
 
-#endif // !AppController_h
+#endif 

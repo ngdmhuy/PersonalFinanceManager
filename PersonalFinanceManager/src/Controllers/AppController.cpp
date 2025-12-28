@@ -42,7 +42,6 @@ using namespace AppHelpers;
 
 void AppController::AutoSaveWorker() {
     while (!stopAutoSave) {
-        // Sleep for 60 seconds (checking stop flag every second)
         for (int i = 0; i < AUTO_SAVE_INTERVAL; ++i) {
             if (stopAutoSave) return;
             std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -50,7 +49,6 @@ void AppController::AutoSaveWorker() {
 
         ShowAutoSaveIndicator();
         
-        // Lock before saving
         std::lock_guard<std::recursive_mutex> lock(dataMutex);
         SaveData(true);
     }
@@ -58,45 +56,37 @@ void AppController::AutoSaveWorker() {
 
 void AppController::ShowAutoSaveIndicator() {
     if (view) {
-        // Save Position
         view->SaveCursor();
         
-
-        // Print Status
         view->MoveToXY(60, 1);
         view->SetColor(ConsoleView::COLOR_SUCCESS);
         std::cout << "[ Auto-Saved ]" << std::flush;
         view->ResetColor();
 
-        // Restore Position
         view->RestoreCursor();
     }
 }
 
-// --- [HELPER] Indexing Logic ---
+// --- Indexing Logic ---
 
 void AppController::AddTransactionToIndex(Transaction* t) {
-    // 1. Index by Wallet
+
     AddToIndexMap(walletIndex, t->GetWalletId(), t);
 
-    // 2. Index by Category (Only for Expense)
     if (t->GetType() == TransactionType::Expense)
         AddToIndexMap(categoryIndex, t->GetCategoryId(), t);
     
-    // 3. Index by Income Sources
     if (t->GetType() == TransactionType::Income)
         AddToIndexMap(incomeSourceIndex, t->GetCategoryId(), t);
 }
 
 void AppController::RemoveTransactionFromIndex(Transaction* t) {
-    // 1. Remove from Wallet Index
+
     RemoveFromIndexMap(walletIndex, t->GetWalletId(), t);
 
-    // 2. Remove from Category Index
     if (t->GetType() == TransactionType::Expense)
         RemoveFromIndexMap(categoryIndex, t->GetCategoryId(), t);
     
-    // 3. Remove from Income Source Index
     if (t->GetType() == TransactionType::Income)
         RemoveFromIndexMap(incomeSourceIndex, t->GetCategoryId(), t);
 }
@@ -106,29 +96,25 @@ void AppController::RemoveTransactionFromIndex(Transaction* t) {
 // ==========================================
 
 AppController::AppController(ConsoleView* v) : view(v) {
-    // 1. Initialize the Storage Lists (The "Tables")
+
     this->transactions = new ArrayList<Transaction*>();
     this->recurringTransactions = new ArrayList<RecurringTransaction*>();
     this->walletsList = new ArrayList<Wallet*>();
     this->categoriesList = new ArrayList<Category*>();
     this->incomeSourcesList = new ArrayList<IncomeSource*>();
 
-    // 2. Initialize the HashMaps (The "Indices" for fast lookup)
     this->walletsMap = new HashMap<std::string, Wallet*>();
     this->categoriesMap = new HashMap<std::string, Category*>();
     this->incomeSourcesMap = new HashMap<std::string, IncomeSource*>();
     this->transactionsMap = new HashMap<std::string, Transaction*>();
     this->recurringTransactionsMap = new HashMap<std::string, RecurringTransaction*>();
 
-    // 3. Load existing data
     LoadData();
 
-    // --- [NEW] Initialize Indices ---
     this->walletIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
     this->categoryIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
     this->incomeSourceIndex = new HashMap<std::string, ArrayList<Transaction*>*>();
 
-    // Rebuild indices from loaded data
     for (size_t i = 0; i < transactions->Count(); ++i) {
         AddTransactionToIndex(transactions->Get(i));
     }
@@ -144,7 +130,7 @@ AppController::~AppController() {
     if (autoSaveThread.joinable()) {
         autoSaveThread.join();
     }
-    // Save state before closing
+
     SaveData();
     
     ClearIndexMap(walletIndex);
@@ -172,9 +158,6 @@ AppController::~AppController() {
 
 void AppController::SaveData(bool silent) {
     std::lock_guard<std::recursive_mutex> lock(dataMutex);
-    // --- [UPDATE] Sort before saving ---
-    // Sort transactions by date so next load is already sorted
-    // transactions->Sort(CompareTransactionsByDate);
 
     SaveTable(FILE_CATEGORIES, categoriesList);
     SaveTable(FILE_SOURCES, incomeSourcesList);
@@ -190,7 +173,7 @@ void AppController::SaveData(bool silent) {
 }
 
 void AppController::LoadData() {
-    // Order: Categories -> Wallets -> Transactions
+
     LoadTable(FILE_CATEGORIES, categoriesList, categoriesMap);
     LoadTable(FILE_SOURCES, incomeSourcesList, incomeSourcesMap);
     LoadTable(FILE_WALLETS, walletsList, walletsMap);
@@ -352,7 +335,7 @@ void AppController::AddTransaction(double amount, std::string walletId, std::str
     transactions->Insert(insertPos, newTrans);
     
 
-    AddTransactionToIndex(newTrans); // <--- Update Index
+    AddTransactionToIndex(newTrans); 
     transactionsMap->Put(transId, newTrans);
     
     if (view) view->ShowSuccess("Transaction added. New Wallet Balance: " + std::to_string(static_cast<long long>(wallet->GetBalance())));
@@ -388,7 +371,7 @@ bool AppController::DeleteTransaction(const std::string& transactionId) {
         if (view) view->ShowWarning("Linked Wallet not found. Balance not restored.");
     }
 
-    RemoveTransactionFromIndex(target); // <--- Update Index
+    RemoveTransactionFromIndex(target); 
     transactions->RemoveAt(foundIndex);
     transactionsMap->Remove(transactionId);
     delete target;
@@ -444,7 +427,6 @@ bool AppController::DeleteRecurringTransaction(const std::string& id) {
         return false;
     }
 
-    // Remove from list
     int foundIndex = -1;
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         if (recurringTransactions->Get(i)->GetId() == id) {
@@ -456,7 +438,6 @@ bool AppController::DeleteRecurringTransaction(const std::string& id) {
         recurringTransactions->RemoveAt(foundIndex);
     }
 
-    // Remove from map and delete object
     recurringTransactionsMap->Remove(id);
     delete r;
 
@@ -545,15 +526,13 @@ void AppController::ProcessRecurringTransactions() {
     }
 }
 
-// --- [OPTIMIZATION] Binary Search for Date Range ---
+// --- Binary Search for Date Range ---
 ArrayList<Transaction*>* AppController::GetTransactionsByDateRange(Date start, Date end) {
     std::lock_guard<std::recursive_mutex> lock(dataMutex);
     ArrayList<Transaction*>* result = new ArrayList<Transaction*>();
 
     if (transactions->Count() == 0) return result;
 
-    // 2. BINARY SEARCH (Tìm vị trí phần tử đầu tiên có Date >= start)
-    // Thuật toán: Lower Bound
     int low = 0;
     int high = static_cast<int>(transactions->Count()) - 1;
     int startIndex = -1;
@@ -563,24 +542,21 @@ ArrayList<Transaction*>* AppController::GetTransactionsByDateRange(Date start, D
         Transaction* midItem = transactions->Get(mid);
 
         if (midItem->GetDate() >= start) {
-            startIndex = mid;   // Có thể đây là đáp án, nhưng thử tìm bên trái xem còn không
+            startIndex = mid;   
             high = mid - 1;
         } else {
-            low = mid + 1;      // Ngày bé hơn start -> Tìm bên phải
+            low = mid + 1;      
         }
     }
 
-    // 3. Duyệt từ startIndex và dừng ngay khi vượt quá endDate (Early Exit)
     if (startIndex != -1) {
         for (size_t i = static_cast<size_t>(startIndex); i < transactions->Count(); ++i) {
             Transaction* t = transactions->Get(i);
             
-            // Nếu ngày hiện tại đã lớn hơn ngày kết thúc -> Dừng ngay lập tức
             if (t->GetDate() > end) {
                 break; 
             }
             
-            // Chắc chắn t nằm trong khoảng [start, end] vì logic trên
             result->Add(t);
         }
     }
@@ -593,7 +569,7 @@ ArrayList<Transaction*>* AppController::GetTransactionsByDateRange(Date start, D
 // =================================================================================
 
 // ---------------------------------------------------------
-// 7.1. WALLET MANAGEMENT (ADVANCED)
+// 7.1. WALLET MANAGEMENT 
 // ---------------------------------------------------------
 
 void AppController::EditWallet(const std::string& id, const std::string& newName) {
@@ -613,24 +589,21 @@ void AppController::EditWallet(const std::string& id, const std::string& newName
     if (view) view->ShowSuccess("Wallet updated to: " + newName);
 }
 
-// [FIX] src/Controllers/AppController.cpp
 bool AppController::DeleteWallet(const std::string& id) {
     std::lock_guard<std::recursive_mutex> lock(dataMutex);
-    
-    // 1. KIỂM TRA RÀNG BUỘC (Cả Income và Expense đều dùng Wallet)
+
     for (size_t i = 0; i < transactions->Count(); ++i) {
         if (transactions->Get(i)->GetWalletId() == id) {
-            return false; // CHẶN XÓA: Ví này đang có lịch sử giao dịch
+            return false; 
         }
     }
     
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         if (recurringTransactions->Get(i)->GetWalletId() == id) {
-            return false; // CHẶN XÓA
+            return false; 
         }
     }
 
-    // 2. TIẾN HÀNH XÓA
     if (walletsMap->ContainsKey(id)) {
         Wallet* w = *walletsMap->Get(id);
         walletsList->Remove(w);
@@ -642,36 +615,32 @@ bool AppController::DeleteWallet(const std::string& id) {
 }
 
 // ---------------------------------------------------------
-// 7.2. MASTER DATA (ADVANCED)
+// 7.2. MASTER DATA 
 // ---------------------------------------------------------
 
-// [FIX] src/Controllers/AppController.cpp
 bool AppController::DeleteCategory(const std::string& id) {
     std::lock_guard<std::recursive_mutex> lock(dataMutex);
     
-    // 1. KIỂM TRA RÀNG BUỘC: Có giao dịch nào đang dùng Category này không?
     for (size_t i = 0; i < transactions->Count(); ++i) {
         Transaction* t = transactions->Get(i);
-        // Chỉ check Expense vì Income dùng Source
+
         if (t->GetType() == TransactionType::Expense && t->GetCategoryId() == id) {
-            return false; // CHẶN XÓA: Đang có giao dịch sử dụng
+            return false; 
         }
     }
     
-    // Kiểm tra trong Recurring Transactions nữa cho chắc
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         RecurringTransaction* rt = recurringTransactions->Get(i);
         if (rt->GetType() == TransactionType::Expense && rt->GetCategoryId() == id) {
-            return false; // CHẶN XÓA
+            return false; 
         }
     }
 
-    // 2. NẾU KHÔNG DÙNG -> TIẾN HÀNH XÓA
     if (categoriesMap->ContainsKey(id)) {
         Category* c = *categoriesMap->Get(id);
-        categoriesList->Remove(c); // Xóa khỏi List
-        categoriesMap->Remove(id); // Xóa khỏi Map
-        delete c; // Giải phóng bộ nhớ
+        categoriesList->Remove(c); 
+        categoriesMap->Remove(id); 
+        delete c; 
         return true;
     }
     return false;
@@ -696,27 +665,24 @@ void AppController::EditIncomeSource(const std::string& id, const std::string& n
 
 }
 
-// [FIX] src/Controllers/AppController.cpp
 bool AppController::DeleteIncomeSource(const std::string& id) {
     std::lock_guard<std::recursive_mutex> lock(dataMutex);
     
-    // 1. KIỂM TRA RÀNG BUỘC
     for (size_t i = 0; i < transactions->Count(); ++i) {
         Transaction* t = transactions->Get(i);
-        // Chỉ check Income
+
         if (t->GetType() == TransactionType::Income && t->GetCategoryId() == id) {
-            return false; // CHẶN XÓA
+            return false; 
         }
     }
     
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         RecurringTransaction* rt = recurringTransactions->Get(i);
         if (rt->GetType() == TransactionType::Income && rt->GetCategoryId() == id) {
-            return false; // CHẶN XÓA
+            return false; 
         }
     }
 
-    // 2. TIẾN HÀNH XÓA
     if (incomeSourcesMap->ContainsKey(id)) {
         IncomeSource* s = *incomeSourcesMap->Get(id);
         incomeSourcesList->Remove(s);
@@ -728,7 +694,7 @@ bool AppController::DeleteIncomeSource(const std::string& id) {
 }
 
 // ---------------------------------------------------------
-// 7.3. TRANSACTION EDIT (ADVANCED)
+// 7.3. TRANSACTION EDIT 
 // ---------------------------------------------------------
 
 bool AppController::EditTransaction(const std::string& id, double newAmount, Date newDate, std::string newDesc) {
@@ -758,15 +724,12 @@ bool AppController::EditTransaction(const std::string& id, double newAmount, Dat
         transactions->Remove(target);
     }
 
-    // RE-CALCULATE BALANCE
-    // 1. Undo Old
     if (target->GetType() == TransactionType::Income) {
         w->SubtractAmount(target->GetAmount()); 
     } else {
         w->AddAmount(target->GetAmount());      
     }
 
-    // 2. Apply New
     if (target->GetType() == TransactionType::Income) {
         w->AddAmount(newAmount); 
     } else {
@@ -889,7 +852,6 @@ void AppController::ClearDatabase() {
     if (categoriesMap) { delete categoriesMap; categoriesMap = new HashMap<std::string, Category*>(); }
     if (incomeSourcesMap) { delete incomeSourcesMap; incomeSourcesMap = new HashMap<std::string, IncomeSource*>(); }
 
-    // Delete Physical Files
     std::remove(FILE_WALLETS.c_str());
     std::remove(FILE_CATEGORIES.c_str());
     std::remove(FILE_SOURCES.c_str());
