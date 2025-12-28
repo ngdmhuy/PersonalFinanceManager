@@ -192,3 +192,91 @@ We didn't want users to memorize complex compilation commands. We wrote simple s
     \item Entry: `src/main.cpp` wires the controllers and UI.
     \end{itemize}
 
+\subsection{Integration with the Technical Core}
+
+While the \textbf{Technical Core} defines the fundamental data structures and algorithms,
+the \texttt{AppController} acts as the orchestration layer that applies these mechanisms
+to implement concrete application features.
+
+Rather than re-implementing logic at the controller level, the system is designed so that
+all critical operations in \texttt{AppController} directly leverage the guarantees provided
+by the Technical Core.
+
+\subsubsection{Sorted Transaction Management}
+
+Whenever \texttt{AppController::AddTransaction} is invoked, the controller delegates the
+ordering responsibility to the core transaction container.
+
+\begin{itemize}
+    \item The transaction list is maintained using the \textbf{sorted insertion by date}
+    algorithm described in the Technical Core.
+    \item This ensures that all downstream features (reports, date-range queries, dashboard summaries)
+    operate on a globally ordered dataset without requiring additional sorting.
+\end{itemize}
+
+\textbf{Benefit:}  
+The controller logic remains simple and readable, while chronological correctness is
+guaranteed at the data-structure level.
+
+\subsubsection{Fast Queries via Secondary Indices}
+
+Filtering and lookup operations exposed by \texttt{AppController} (such as viewing transactions
+by wallet, category, or income source) rely on the \textbf{secondary indexing mechanism}.
+
+\begin{itemize}
+    \item Upon insertion or deletion, \texttt{AppController} updates both the primary transaction list
+    and the corresponding index maps.
+    \item Query handlers then retrieve relevant subsets directly from these indices instead of
+    performing full linear scans.
+\end{itemize}
+
+\textbf{Benefit:}  
+This significantly improves responsiveness for user-driven queries while keeping controller
+methods short and focused.
+
+\subsubsection{Date Range Queries and Reporting}
+
+Reporting features implemented in \texttt{NavReport} and aggregated by \texttt{AppController}
+utilize the \textbf{range query on sorted data} algorithm.
+
+\begin{itemize}
+    \item The controller identifies the starting position using binary search.
+    \item Only relevant transactions are scanned until the end date is exceeded.
+\end{itemize}
+
+\textbf{Benefit:}  
+Reports scale with the number of matching records rather than the total dataset size,
+making analytics predictable and efficient.
+
+\subsubsection{Recurring Transaction Generation}
+
+During application startup and scheduled checks, \texttt{AppController} processes
+\texttt{recurring\_transactions} using the \textbf{incremental scheduling algorithm}
+defined in the Technical Core.
+
+\begin{itemize}
+    \item Each blueprint is evaluated deterministically.
+    \item Concrete transactions are generated exactly once per valid period.
+\end{itemize}
+
+\textbf{Benefit:}  
+The controller avoids duplicate generation and maintains correctness without storing
+redundant state.
+
+\subsubsection{Search and Filtering Operations}
+
+Search features exposed through \texttt{NavSearch} delegate evaluation logic to
+predicate-based filters provided by the core layer.
+
+\textbf{Benefit:}  
+This separation allows search rules to evolve independently from navigation logic,
+while remaining easy to test and reason about.
+
+\subsubsection{Concurrency Guarantees}
+
+All \texttt{AppController} methods that mutate shared state execute under the
+\textbf{mutex protection} enforced by the Technical Core.
+
+\textbf{Benefit:}  
+Thread safety is achieved transparently, allowing background services (such as auto-save)
+to coexist safely with user-driven actions.
