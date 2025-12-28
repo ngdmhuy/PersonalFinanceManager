@@ -613,87 +613,68 @@ void AppController::EditWallet(const std::string& id, const std::string& newName
     if (view) view->ShowSuccess("Wallet updated to: " + newName);
 }
 
+// [FIX] src/Controllers/AppController.cpp
 bool AppController::DeleteWallet(const std::string& id) {
     std::lock_guard<std::recursive_mutex> lock(dataMutex);
-    Wallet* w = GetWalletById(id);
-    if (w == nullptr) {
-        if (view) view->ShowError("Wallet ID not found.");
-        return false;
-    }
-
-    // Dependency Check: Transactions
+    
+    // 1. KIỂM TRA RÀNG BUỘC (Cả Income và Expense đều dùng Wallet)
     for (size_t i = 0; i < transactions->Count(); ++i) {
         if (transactions->Get(i)->GetWalletId() == id) {
-            if (view) view->ShowError("Cannot delete wallet. It contains existing transactions.");
-            return false;
+            return false; // CHẶN XÓA: Ví này đang có lịch sử giao dịch
         }
     }
     
-    // Dependency Check: Recurring
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         if (recurringTransactions->Get(i)->GetWalletId() == id) {
-             if (view) view->ShowError("Cannot delete wallet. It is used in a Recurring Transaction setup.");
-             return false;
+            return false; // CHẶN XÓA
         }
     }
 
-    walletsMap->Remove(id);
-    
-    int indexToRemove = -1;
-    for (size_t i = 0; i < walletsList->Count(); ++i) {
-        if (walletsList->Get(i)->GetId() == id) {
-            indexToRemove = (int)i;
-            break;
-        }
+    // 2. TIẾN HÀNH XÓA
+    if (walletsMap->ContainsKey(id)) {
+        Wallet* w = *walletsMap->Get(id);
+        walletsList->Remove(w);
+        walletsMap->Remove(id);
+        delete w;
+        return true;
     }
-    if (indexToRemove != -1) walletsList->RemoveAt(indexToRemove);
-
-    delete w; 
-    if (view) view->ShowSuccess("Wallet deleted successfully.");
-    return true;
+    return false;
 }
 
 // ---------------------------------------------------------
 // 7.2. MASTER DATA (ADVANCED)
 // ---------------------------------------------------------
 
+// [FIX] src/Controllers/AppController.cpp
 bool AppController::DeleteCategory(const std::string& id) {
     std::lock_guard<std::recursive_mutex> lock(dataMutex);
+    
+    // 1. KIỂM TRA RÀNG BUỘC: Có giao dịch nào đang dùng Category này không?
     for (size_t i = 0; i < transactions->Count(); ++i) {
         Transaction* t = transactions->Get(i);
-        if (t->GetType() == TransactionType::Expense) {
-            if (t->GetCategoryId() == id) {
-                if (view) view->ShowError("Cannot delete Category. Used in Transaction ID: " + t->GetId());
-                return false;
-            }
+        // Chỉ check Expense vì Income dùng Source
+        if (t->GetType() == TransactionType::Expense && t->GetCategoryId() == id) {
+            return false; // CHẶN XÓA: Đang có giao dịch sử dụng
         }
     }
     
+    // Kiểm tra trong Recurring Transactions nữa cho chắc
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         RecurringTransaction* rt = recurringTransactions->Get(i);
         if (rt->GetType() == TransactionType::Expense && rt->GetCategoryId() == id) {
-             if (view) view->ShowError("Cannot delete Category. Used in a Recurring Transaction.");
-             return false;
+            return false; // CHẶN XÓA
         }
     }
 
-    Category* c = GetCategoryById(id);
-    if (!c) {
-        if (view) view->ShowError("Category ID not found.");
-        return false;
+    // 2. NẾU KHÔNG DÙNG -> TIẾN HÀNH XÓA
+    if (categoriesMap->ContainsKey(id)) {
+        Category* c = *categoriesMap->Get(id);
+        categoriesList->Remove(c); // Xóa khỏi List
+        categoriesMap->Remove(id); // Xóa khỏi Map
+        delete c; // Giải phóng bộ nhớ
+        return true;
     }
-
-    categoriesMap->Remove(id);
-    
-    int idx = -1;
-    for(size_t i=0; i<categoriesList->Count(); ++i) 
-        if(categoriesList->Get(i)->GetId() == id) idx = (int)i;
-    
-    if(idx != -1) categoriesList->RemoveAt(idx);
-    
-    delete c;
-    if (view) view->ShowSuccess("Category deleted successfully.");
-    return true;
+    return false;
 }
 
 void AppController::EditCategory(const std::string& id, const std::string& newName) {
@@ -715,43 +696,35 @@ void AppController::EditIncomeSource(const std::string& id, const std::string& n
 
 }
 
+// [FIX] src/Controllers/AppController.cpp
 bool AppController::DeleteIncomeSource(const std::string& id) {
     std::lock_guard<std::recursive_mutex> lock(dataMutex);
+    
+    // 1. KIỂM TRA RÀNG BUỘC
     for (size_t i = 0; i < transactions->Count(); ++i) {
         Transaction* t = transactions->Get(i);
-        if (t->GetType() == TransactionType::Income) {
-            if (t->GetCategoryId() == id) {
-                if (view) view->ShowError("Cannot delete Source. Used in Transaction ID: " + t->GetId());
-                return false;
-            }
+        // Chỉ check Income
+        if (t->GetType() == TransactionType::Income && t->GetCategoryId() == id) {
+            return false; // CHẶN XÓA
         }
     }
     
     for (size_t i = 0; i < recurringTransactions->Count(); ++i) {
         RecurringTransaction* rt = recurringTransactions->Get(i);
         if (rt->GetType() == TransactionType::Income && rt->GetCategoryId() == id) {
-             if (view) view->ShowError("Cannot delete Source. Used in a Recurring Transaction.");
-             return false;
+            return false; // CHẶN XÓA
         }
     }
 
-    IncomeSource* s = GetIncomeSourceById(id);
-    if (!s) {
-        if (view) view->ShowError("Source ID not found.");
-        return false;
+    // 2. TIẾN HÀNH XÓA
+    if (incomeSourcesMap->ContainsKey(id)) {
+        IncomeSource* s = *incomeSourcesMap->Get(id);
+        incomeSourcesList->Remove(s);
+        incomeSourcesMap->Remove(id);
+        delete s;
+        return true;
     }
-
-    incomeSourcesMap->Remove(id);
-    
-    int idx = -1;
-    for(size_t i=0; i<incomeSourcesList->Count(); ++i) 
-        if(incomeSourcesList->Get(i)->GetId() == id) idx = (int)i;
-    
-    if(idx != -1) incomeSourcesList->RemoveAt(idx);
-    
-    delete s;
-    if (view) view->ShowSuccess("Income Source deleted.");
-    return true;
+    return false;
 }
 
 // ---------------------------------------------------------

@@ -25,26 +25,51 @@ void NavigationController::PrintTransactionList(ArrayList<Transaction*>* list) {
         return;
     }
 
-    std::string headers[] = {"ID", "Date", "Amount", "Type", "Description"};
-    int widths[] = {18, 12, 15, 8, 30};
-    view.PrintTableHeader(headers, widths, 5);
+    // 1. Cập nhật Header để thêm cột Wallet và Category/Source
+    // Bỏ cột ID đi vì người dùng thường không cần xem ID, họ cần xem tên
+    std::string headers[] = {"Date", "Wallet", "Category/Source", "Amount", "Type", "Description"};
+    
+    // Tăng số lượng cột lên 6 và canh chỉnh độ rộng
+    int numCols = 6;
+    int widths[] = {12, 20, 20, 15, 8, 25}; 
+
+    view.PrintTableHeader(headers, widths, numCols);
 
     for (size_t i = 0; i < list->Count(); ++i) {
         Transaction* t = list->Get(i);
-        std::string typeStr = (t->GetType() == TransactionType::Income) ? "Income" : "Expense";
-        
-        std::string dateStr = t->GetDate().ToString();
-        std::string amtStr = view.FormatCurrency(static_cast<long long>(t->GetAmount()));
-        std::string desc = t->GetDescription();
-        
-        if (desc.length() > 28) desc = desc.substr(0, 25) + "...";
 
-        std::string data[] = { t->GetId(), dateStr, amtStr, typeStr, desc };
-        view.PrintTableRow(data, widths, 5);
+        // 2. Lấy tên Wallet từ ID
+        Wallet* w = appController->GetWalletById(t->GetWalletId());
+        std::string wName = (w != nullptr) ? w->GetName() : "Unknown";
+
+        // 3. Lấy tên Category (nếu là Expense) hoặc Source (nếu là Income)
+        std::string catName = "Unknown";
+        std::string typeStr = "";
+        
+        if (t->GetType() == TransactionType::Income) {
+            typeStr = "Income";
+            IncomeSource* s = appController->GetIncomeSourceById(t->GetCategoryId());
+            catName = (s != nullptr) ? s->GetName() : "Unknown";
+        } else {
+            typeStr = "Expense";
+            Category* c = appController->GetCategoryById(t->GetCategoryId());
+            catName = (c != nullptr) ? c->GetName() : "Unknown";
+        }
+
+        // 4. Định dạng dữ liệu để in ra bảng
+        std::string data[] = {
+            t->GetDate().ToString(),                        // Date
+            wName,                                          // Wallet Name (Thay vì ID)
+            catName,                                        // Category/Source Name
+            view.FormatCurrency((long long)t->GetAmount()), // Amount có dấu phẩy
+            typeStr,                                        // Type
+            t->GetDescription()                             // Description
+        };
+
+        view.PrintTableRow(data, widths, numCols);
     }
-    view.PrintTableSeparator(widths, 5);
     
-    view.ShowSuccess("Found " + std::to_string(list->Count()) + " transaction(s).");
+    view.PrintTableSeparator(widths, numCols);
 }
 
 // =============================================================
