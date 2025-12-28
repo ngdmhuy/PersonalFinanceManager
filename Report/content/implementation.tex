@@ -1,194 +1,154 @@
-\section{System Implementation Details}
+\section{Technical Core}
 
-This section details the implementation of the core application logic, focusing on data modeling, utilities, and the AI handling.
+This section describes the core technical mechanisms and algorithms that form the foundation of the system.
+These components are independent from user interface or controller logic and focus purely on data integrity,
+performance, and correctness.
 
-\subsection{Utilities: ID Generation}
-To ensure referential integrity across the system without relying on fragile memory pointers, every entity (Transaction, Wallet, Category, etc) is assigned a unique string identifier.
+\subsection{Core Data Structures}
 
-\subsubsection{Implementation Strategy}
-We implemented a custom \texttt{IdGenerator} class to handle unique key creation.
-
-\begin{itemize}
-    \item \textbf{Algorithm:} The generator utilizes the \textbf{Mersenne Twister 19937} engine (\texttt{std::mt19937}), seeded by a non-deterministic random device (\texttt{std::random\_device}). This ensures a uniform distribution and minimizes the risk of ID collisions.
-    \item \textbf{Format:} IDs are generated in a human-readable format: \texttt{PREFIX-XXXX-XXXX-XXXX}. 
-    \item \textbf{Composition:} The random blocks consist of alphanumeric characters (A-Z, a-z, 0-9), selected from a charset of size 62.
-\end{itemize}
-
-\subsubsection{Role in Data Modeling}
-As illustrated in Figure \ref{fig:schema}, these IDs serve as the backbone of our relational model.
-\begin{itemize}
-    \item \textbf{Primary Keys:} Every \texttt{transactions} and \texttt{wallets} record holds a unique \texttt{id} field.
-    \item \textbf{Foreign Keys:} Relationships are maintained by storing string references (e.g., \texttt{walletId}) rather than memory pointers. This allows the system to serialize data to binary files safely without complex pointer swizzling.
-\end{itemize}
-
-\subsection{Data Modeling \& Entity Relationships}
-The system utilizes a relational design pattern adapted for object-oriented programming. As shown in Figure \ref{fig:schema}, the data model relies on unique string identifiers (UUIDs) to maintain relationships between entities, avoiding the complexity and risks of raw memory pointers.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\linewidth]{Report/img/UMLdiagram.png}
-    \caption{Entity Relationship Diagram}
-    \label{fig:schema}
-\end{figure}
-
-\subsubsection{Core Transactions}
-The \texttt{transactions} entity represents the central ledger of the application. It utilizes a polymorphic design to handle both inflows and outflows.
-\begin{itemize}
-    \item \textbf{Common Attributes:} All records share standard financial data:
-    \begin{itemize}
-        \item \texttt{id}: The unique primary key.
-        \item \texttt{walletId}: A foreign key linking the transaction to a specific \texttt{Wallet}.
-        \item \texttt{amount}: The monetary value.
-        \item \texttt{date}: The timestamp of the transaction.
-        \item \texttt{type}: A discriminator string ("Income" or "Expense").
-    \end{itemize}
-    \item \textbf{Classification References:} Depending on the transaction type, the record links to a specific classification entity:
-    \begin{itemize}
-        \item \textbf{Expenses:} Utilize the \texttt{categoryId} foreign key to link to the \texttt{categories} table.
-        \item \textbf{Incomes:} Utilize the \texttt{incomeSourceId} foreign key to link to the \texttt{income\_sources} table.
-    \end{itemize}
-\end{itemize}
-
-\subsubsection{Automation Model (Recurring Transactions)}
-The \texttt{recurring\_transactions} entity serves as a "Blueprint" for future data generation.
-\begin{itemize}
-    \item \textbf{Scheduling Logic:} Unlike standard transactions, this entity includes frequency data (\texttt{frequency}, \texttt{startDate}, \texttt{endDate}) and tracking state (\texttt{lastGeneratedDate}).
-    \item \textbf{Independence:} These records do not affect wallet balances directly. Instead, the system polls these blueprints upon startup to generate concrete \texttt{transactions} when due dates are reached.
-\end{itemize}
-
-\subsubsection{Master Data Entities}
-The system maintains three lightweight reference entities to enforce data validation.
-\begin{itemize}
-    \item \textbf{Wallets:} Stores the current \texttt{balance} and account \texttt{name}.
-    \item \textbf{Categories:} Defines expense classifications (e.g., "Food", "Rent").
-    \item \textbf{Income Sources:} Defines income origins (e.g., "Salary", "Dividends").
-\end{itemize}
-
-\subsection{Binary Persistence Engine}
-To meet the requirement of preserving data across sessions, we implemented a custom serialization engine (\texttt{BinaryFileHelper}). This module handles the low-level translation of C++ objects into a binary stream.
-
-\subsubsection{Generic Serialization Templates}
-To avoid repetitive code, we implemented generic wrapper functions for reading and writing primitive types.
+The system is built upon custom generic data structures to maintain full control over memory usage and behavior.
 
 \begin{itemize}
-    \item \textbf{Template Approach:} We utilized \texttt{template<typename T>} functions to handle standard data types (\texttt{int}, \texttt{double}, \texttt{bool}). These functions cast the memory address of variables to \texttt{char*} and write them directly to the \texttt{std::ofstream} buffer.
-    \item \textbf{String Handling:} Variable-length strings (such as descriptions) pose a challenge in binary files. We solved this by first writing the length of the string (\texttt{size\_t}) as a header, followed immediately by the character data. This allows the reader to know exactly how many bytes to extract during deserialization.
+    \item \textbf{ArrayList<T>} — dynamic array used for ordered collections.
+    \item \textbf{HashMap<K, V>} — hash-based associative container for fast key-based access.
 \end{itemize}
 
-\subsubsection{Persistence Strategy: Snapshots vs. In-Place Editing}
-A significant engineering decision involved how to handle updates (e.g., editing a transaction).
+Each structure is designed to be deterministic, serializable, and independent of STL containers to simplify debugging
+and binary persistence.
+
+\subsection{Algorithmic Components}
+
+\subsubsection{Sorted Insertion by Date}
+
+All transactions are maintained in chronological order based on their date.
+
 \begin{itemize}
-    \item \textbf{The Problem:} Implementing "In-Place" editing in a binary file is highly complex. Changing a description from "Food" (4 bytes) to "Groceries" (9 bytes) would require shifting all subsequent bytes in the file, which is error-prone and slow.
-    \item \textbf{The Solution (Snapshotting):} Instead of modifying specific bytes, we adopted a \textbf{"Full Rewrite" strategy}. Whenever data is saved, the system rewrites the entire \texttt{transactions.bin} file from scratch using the current memory state.
+    \item \textbf{Algorithm:} Binary search to determine insertion position, followed by indexed insertion.
+    \item \textbf{Purpose:} Preserves global ordering without requiring full re-sorting after each insertion.
 \end{itemize}
 
-\subsubsection{Integration with Auto-Save}
-Because rewriting the entire file can be computationally expensive (relative to a single byte update), we offloaded this task to the background thread mentioned in the \textbf{Technical Core} section.
+\textbf{Procedure:}
+\begin{enumerate}
+    \item Perform binary search on the sorted list to find the first position where
+    \texttt{existingDate $\ge$ newDate}.
+    \item Insert the new element at the computed index.
+\end{enumerate}
+
+\textbf{Time Complexity:}
 \begin{itemize}
-    \item \textbf{Frequency:} The \texttt{AutoSaveWorker} triggers this "Snapshot" process every 60 seconds.
-    \item \textbf{Benefit:} This ensures that the expensive I/O operation never blocks the user interface (Main Thread), while still guaranteeing that the disk storage is never more than one minute behind the live data.
+    \item Binary search: $O(\log n)$
+    \item Array insertion shift: $O(n)$
+    \item Overall: $O(n)$
 \end{itemize}
 
-\subsection{Cross-Platform Infrastructure}
-Making a console application run smoothly on both Windows and macOS is surprisingly difficult. While the logical C++ code is the same, the "Terminal" itself behaves very differently on each operating system. We built a translation layer to bridge this gap.
+\textbf{Invariant:}  
+The transaction list is always sorted in non-decreasing order of date.
 
-\subsubsection{The Problem: "Speaking Different Languages"}
-Simple commands like "Clear Screen" or "Wait for Key Press" are not standard in C++.
+\subsubsection{Indexed Lookup (Secondary Indices)}
+
+To support fast filtering without repeated full scans, secondary index maps are maintained.
+
 \begin{itemize}
-    \item \textbf{Windows} uses specific system commands (like \texttt{cls}).
-    \item \textbf{macOS/Linux} relies on special text codes (ANSI escape sequences).
+    \item Wallet-based index
+    \item Category-based index
+    \item Income-source-based index
 \end{itemize}
 
-\textbf{Our Solution:} We created a \texttt{PlatformUtils} file that acts as a translator. It checks which OS is running and automatically chooses the correct command, so the rest of our app doesn't have to worry about it.
+Each index maps an entity ID to a list of related transactions.
 
-\subsubsection{One-Click Build Scripts}
-We didn't want users to memorize complex compilation commands. We wrote simple scripts for each OS:
+\textbf{Algorithm:} Hash-based indexing with append-only updates.
+
+\textbf{Operations:}
 \begin{itemize}
-    \item \textbf{Windows:} \texttt{run\_windows.bat} (Detects compiler and builds).
-    \item \textbf{macOS:} \texttt{run\_mac.command} (Sets permissions and runs).
+    \item Insert transaction reference into one or more index lists.
+    \item Remove reference upon deletion or modification.
 \end{itemize}
 
-\subsection{UI Techniques}
-    We used several techniques to make the console UI usable and easy to test:
-    \begin{itemize}
-    \item \textbf{Layered rendering API} — `ConsoleView` provides primitives (headers, boxed panels, tables, colored lines) so high-level screens can be composed consistently across features.
-    \item \textbf{Consistent menus and shortcuts} — `Menus` centralizes text and shortcuts so each flow uses the same input conventions (number keys to select, ESC to cancel/back).
-    \item \textbf{Explicit input validation} — `InputValidator` checks money, dates, indexes and strings before handing control to the controller; this prevents invalid state and simplifies error handling.
-    \item \textbf{Small, single-responsibility flows} — each `Nav*` method implements a single flow (e.g., add expense, edit income) and is kept short so unit testing and review are straightforward.
-    \item \textbf{Clear user feedback} — success/error/warning/info helpers are used consistently so test scripts and manual testers can assert expected outcomes easily.
-    \item \textbf{Terminal-aware formatting} — `PlatformUtils` normalizes terminal specifics so colors and simple formatting work on Windows and POSIX terminals.
-    \end{itemize}
+\textbf{Time Complexity:}
+\begin{itemize}
+    \item Insert / Remove: $O(1)$ average
+    \item Query by indexed key: $O(k)$ where $k$ is number of related transactions
+\end{itemize}
 
-\subsection{Short walkthrough — each feature}
-    The walkthrough below is split into small parts; each describes how the UI supports a feature, the user steps, and the relevant code points. This list covers all main menu features.
+\textbf{Design Rationale:}  
+This approach trades small memory overhead for significant query performance gains compared to repeated linear scans.
 
-    \subsubsection{Dashboard}
-    \begin{itemize}
-    \item Goal: show quick status (date, total balance, list of wallets and counts of transactions).
-    \item UI: `Dashboard::Display` prints the header, total balance (green/red), and a table of wallets (`src/Views/DashBoard.cpp`).
-    \end{itemize}
+\subsubsection{Range Query on Sorted Data}
 
-    \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.75\textwidth]{img/DashBoard.png}
-    \caption{Main dashboard (date, total balance, wallets)}
-    \label{fig:dashboard}
-    \end{figure} 
+Date-range queries leverage the sorted nature of the transaction list.
 
-    \subsubsection{Main Menu}
-    \begin{itemize}
-    \item Goal: provide entry points to all app features via numbered options.
-    \item UI: `Menus::DisplayMainMenu` shows options and prints a shortcut footer. Navigation is handled by `NavigationController::Run`.
-    \end{itemize}
+\textbf{Algorithm:} Binary search followed by linear scan.
 
-    \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.75\textwidth]{img/MainMenu.png}
-    \caption{Main menu with shortcuts}
-    \label{fig:main_menu}
-    \end{figure}
+\begin{enumerate}
+    \item Binary search to locate the first transaction with date $\ge$ start date.
+    \item Sequentially iterate until date $>$ end date.
+\end{enumerate}
 
-    \subsubsection{Income (Add / View / Edit / Delete + Manage Sources)}
-    \begin{itemize}
-    \item Add: select wallet, amount (validated), date, description, source; `NavigationController::HandleAddIncome` then `AppController::AddTransaction`.
-    \item View/Edit/Delete: listing and index-based selection flows are implemented in `HandleViewIncome`, `HandleEditIncome` and `HandleDeleteIncome`.
-    \item Sources management: CRUD flows for income sources live in `NavIncome` methods.
-    \end{itemize}
+\textbf{Time Complexity:}
+\begin{itemize}
+    \item Binary search: $O(\log n)$
+    \item Range scan: $O(m)$ where $m$ is number of results
+\end{itemize}
 
-    \subsubsection{Expense (Add / View / Edit / Delete + Manage Categories)}
-    \begin{itemize}
-    \item Add: wallet, amount, date, description, category; `NavigationController::HandleAddExpense` calls `AppController::AddTransaction`.
-    \item View/Edit/Delete and Category management: handled via `NavExpense` and category flows.
-    \end{itemize}
+\textbf{Invariant:}  
+Transactions are strictly ordered by date, enabling early termination.
 
-    \subsubsection{Wallets (Create / View / Delete)}
-    \begin{itemize}
-    \item Create: `HandleCreateWallet` prompts for name and initial balance and calls `AppController::AddWallet`.
-    \item View/Delete: lists and index-selection flows in `NavWallet`.
-    \end{itemize}
+\subsubsection{Recurring Transaction Scheduling}
 
-    \subsubsection{Reports and Analytics}
-    \begin{itemize}
-    \item Monthly summary, spending by category, income-vs-expense and wallet balance overview are implemented in `NavReport` and use `AppController` aggregation helpers.
-    \end{itemize}
+Recurring entries act as templates for generating future transactions.
 
-    \subsubsection{Recurring Transactions}
-    \begin{itemize}
-    \item Create/View/Edit/Delete: full CRUD is implemented in `NavRecurring` and `AppController` provides scheduling logic.
-    \end{itemize}
+\textbf{Algorithm:} Incremental date progression.
 
-    \subsubsection{Search / Clear / Save Data}
-    \begin{itemize}
-    \item Search: provides indexed search over transactions and wallets, callable from many menus; implemented in `NavSearch` and helpers in `AppController`.
-    \item Clear / Save Data: data-management actions (export, save, clear sample data) are implemented in the data-flow controllers and `BinaryFileHelper`.
-    \end{itemize}
+\begin{itemize}
+    \item Each recurring record stores its last generated date.
+    \item The next due date is computed deterministically from frequency rules.
+\end{itemize}
 
-\subsection{Files evidence}
-    \begin{itemize}
-    \item Views: `include/Views/ConsoleView.h`, `src/Views/ConsoleView.cpp`, `include/Views/Menus.h`, `src/Views/Menus.cpp`, `include/Views/DashBoard.h`, `src/Views/DashBoard.cpp`.
-    \item Input helpers: `include/Views/InputValidator.h`, `src/Views/InputValidator.cpp`.
-    \item Controllers: `include/Controllers/NavigationController.h`, `src/Controllers/Nav*.cpp`, `src/Controllers/AppController.cpp`.
-    \item Models and utils: `src/Models/*`, `src/Utils/BinaryFileHelper.cpp`, `src/Utils/IdGenerator.cpp`, `src/Utils/Date.cpp`.
-    \item Entry: `src/main.cpp` wires the controllers and UI.
-    \end{itemize}
+\textbf{Procedure:}
+\begin{enumerate}
+    \item Compare next due date with current date.
+    \item If due, generate a concrete transaction and advance the schedule.
+    \item Repeat until the template is no longer due.
+\end{enumerate}
 
+\textbf{Time Complexity:}
+\begin{itemize}
+    \item Per recurring record: $O(g)$ where $g$ is number of generated instances
+\end{itemize}
+
+\textbf{Invariant:}  
+Each recurring transaction is generated exactly once per valid period.
+
+\subsubsection{Search and Filtering Engine}
+
+Search and filter operations are implemented using predicate-based linear scans.
+
+\textbf{Algorithm:} Linear filtering with lambda predicates.
+
+\textbf{Use Cases:}
+\begin{itemize}
+    \item Search by keyword
+    \item Filter by type
+    \item Filter by amount range
+\end{itemize}
+
+\textbf{Time Complexity:} $O(n)$
+
+\textbf{Rationale:}  
+These operations are user-driven and operate on manageable data sizes, making linear scans acceptable while keeping the
+core logic simple and predictable.
+
+\subsection{Concurrency and Data Safety}
+
+The technical core enforces thread safety through mutual exclusion.
+
+\begin{itemize}
+    \item \textbf{Mechanism:} Recursive mutex locking
+    \item \textbf{Scope:} All read/write operations on shared data structures
+\end{itemize}
+
+\textbf{Invariant:}  
+At most one thread may mutate core data structures at any given time.
+
+\textbf{Benefit:}  
+Prevents race conditions while allowing re-entrant calls within the same execution flow.
