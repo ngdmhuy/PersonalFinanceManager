@@ -1,0 +1,35 @@
+\section{Technical Core}
+This section details how we architect the system without relying on the C++ Standard Template Library (STL), requiring the manual implementation of dynamic memory management and thread synchronization.
+
+\subsection{Custom Data Structures}
+To replace \texttt{std::vector} and \texttt{std::unordered\_map}, we implemented generic container classes optimized for the specific access patterns of the Personal Finance Manager.
+
+\subsubsection{Generic Dynamic Array (\texttt{ArrayList})}
+The \texttt{ArrayList<T>} is a template class managing a contiguous block of memory.
+\begin{itemize}
+    \item \textbf{Memory Management strategy:} The structure uses dynamic 1D-array as the internal storage. We utilize a "Geometric Expansion" strategy. When the array reaches capacity, it allocates a new block of memory sized $2 \times Capacity_{old}$, deep-copies existing elements, and frees the old block. To interact with the
+    \item \textbf{Safety:} The class implements a destructor to automatically \texttt{delete[]} the internal array, preventing memory leaks when the list goes out of scope.
+\end{itemize}
+
+\subsubsection{Hash Map (\texttt{HashMap})}
+To support the "Secondary Indexing" feature (retrieving transactions by Wallet ID instantly), we implemented a Hash Map using \textbf{Separate Chaining}.
+\begin{itemize}
+    \item \textbf{Hashing:} We use a string hashing algorithm to map alphanumeric IDs (UUIDs) to bucket indices.
+    \item \textbf{Collision Resolution:} Each bucket contains a linked list of nodes. If two keys hash to the same index, the new entry is appended to the chain.
+    \item \textbf{Performance:} This reduces lookup time for Wallet/Category filters from $O(N)$ (linear scan) to $O(1)$ (average case).
+\end{itemize}
+
+\subsection{Algorithmic Optimization}
+\subsubsection{The "Always-Sorted" Invariant}
+A key architectural decision was to maintain the Transaction list in chronological order at all times. This shifts the computational cost from the "Read" phase (Reporting) to the "Write" phase (Insertion).
+\begin{enumerate}
+    \item \textbf{Binary Search Insertion:} Instead of appending to the end, we implemented a custom \texttt{GetSortedInsertIndex} function. It uses Binary Search to find the correct position for a new date in $O(\log N)$ time.
+    \item \textbf{Optimization Benefit:} This allows date-range reports (e.g., "Get December Transactions") to use a Lower Bound search, making report generation nearly instantaneous even with large datasets.
+\end{enumerate}
+
+\subsection{Concurrency \& Auto-Save}
+To prevent data loss during unexpected crashes, we implemented a background persistence layer.
+\begin{itemize}
+    \item \textbf{Multithreading:} A dedicated \texttt{std::thread} runs parallel to the main application loop, executing the save routine every 60 seconds.
+    \item \textbf{Thread Safety:} We utilize a \texttt{std::recursive\_mutex} to protect shared data. The logic ensures that if the User is currently editing a transaction (Main Thread), the Auto-Save thread must wait until the edit is complete before reading the data to write to disk. This prevents race conditions and data corruption.
+\end{itemize}

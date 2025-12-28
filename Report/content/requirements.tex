@@ -1,0 +1,49 @@
+\section{Requirements Specification}
+
+The system was designed to strictly adhere to the functional specifications outlined in the Final Project Coursework, while satisfying rigorous technical constraints regarding memory management and platform compatibility.
+
+\subsection{Functional Requirements}
+
+\subsubsection{Transaction Management}
+The core function of the application is to record and manage financial activities with precision \cite{project_spec}.
+\begin{itemize}
+    \item \textbf{Income Recording:} Users can log earnings by specifying the Date, Amount, Wallet, and an \textbf{Income Source} (e.g., Salary, Bonus).
+    \item \textbf{Expense Recording:} Users can log expenditures by linking them to a \textbf{Category} (e.g., Food, Rent) and a specific Wallet.
+    \item \textbf{Validation:} The system must prevent invalid entries, such as negative amounts or linking transactions to non-existent wallets.
+\end{itemize}
+
+\subsubsection{Automation (Recurring Transactions)}
+To reduce manual data entry, the system supports an automation engine for regular payments.
+\begin{itemize}
+    \item \textbf{Scheduling:} Users can define templates for recurring transactions (Daily, Weekly, Monthly).
+    \item \textbf{Auto-Generation:} Upon application startup, the \texttt{AppController} detects due transactions based on the last generation date and automatically creates the necessary records for the missed period.
+\end{itemize}
+
+\subsubsection{Search \& Reporting}
+The application provides tools to analyze financial health:
+\begin{itemize}
+    \item \textbf{Date Range Filtering:} View detailed transaction history within a specific start and end date.
+    \item \textbf{Advanced Search:} Filter transactions by Wallet, Category, or Keyword search (in descriptions).
+    \item \textbf{Financial Summary:} Aggregated views of Total Income, Total Expense, and Net Balance per Wallet.
+\end{itemize}
+
+\subsection{Non-Functional Requirements}
+
+\subsubsection{Technical Constraints (No STL)}
+As a primary academic challenge, the use of the **Standard Template Library (STL)** was strictly prohibited for data containers.
+\begin{itemize}
+    \item \textbf{Implementation:} We replaced \texttt{std::vector} and \texttt{std::map} with custom-built \texttt{ArrayList<T>} and \texttt{HashMap<K,V>} classes using manual dynamic memory allocation.
+\end{itemize}
+
+\subsubsection{Data Persistence \& Reliability}
+\begin{itemize}
+    \item \textbf{Binary Storage:} All data (Transactions, Wallets, Master Data) is serialized to binary files to ensure efficient storage and fast loading times.
+    \item \textbf{Auto-Save (Enhancement):} Beyond standard session saving, we implemented a **background thread** that triggers a save operation every 60 seconds. This ensures data integrity even in the event of an unexpected application crash.
+\end{itemize}
+
+\subsubsection{Cross-Platform Compatibility}
+The application is designed to function identically on different operating systems:
+\begin{itemize}
+    \item \textbf{Windows:} Compiled via MinGW or Visual Studio (`run_windows.bat`).
+    \item \textbf{macOS/Linux:} Compiled via Clang/GCC (`run_mac.command`).
+\end{itemize}

@@ -1,35 +1,69 @@
-\thispagestyle{empty}
+\section{Team Composition \& Task Assignment}
 
-\begin{center}
-    \textbf{\LARGE TASK ASSIGNMENT TABLE}
-\end{center}
-\vspace{0.5cm}
+This project was developed by Group 09 under the leadership of \textbf{Nguyễn Đình Minh Huy}. The workload was distributed based on the Model-View-Controller (MVC) architecture, ensuring clear separation of concerns.
 
-% Group Information Section
+\subsection{Group Information}
 \noindent
 \begin{tabular}{@{}ll}
-    \textbf{\large Group Name:} & \large 09 \\ [0.5em]
-    \textbf{\large Leader:} & Nguyễn Đình Minh Huy \\ [0.5em] 
+    \textbf{Group ID:} & 09 \\
+    \textbf{Class:} & 25A01 \\
+    \textbf{Leader:} & Nguyễn Đình Minh Huy (25125083) \\
 \end{tabular}
-\vspace{0.5cm}
 
-% Assignment Table
+\subsection{Work Division}
+The following table details the specific responsibilities and code contributions of each member. 
+\emph{Note: M1 (Leader) was responsible for the core infrastructure, including all Models, Utilities, and Cross-Platform compatibility.}
+
 \begin{table}[h]
     \centering
-    \renewcommand{\arraystretch}{1.4} 
-    \setlength{\tabcolsep}{4pt}      
-    % Adjusted widths to fit problem lists
-    \begin{tabular}{|c|c|l|p{5.0cm}|p{4.0cm}|}
+    % Compact rows
+    \renewcommand{\arraystretch}{1.2} 
+    \setlength{\tabcolsep}{3pt}      
+    
+    \begin{tabular}{|c|c|l|p{6.8cm}|p{3.2cm}|}
         \hline
-        \textbf{No.} & \textbf{ID} & \textbf{Full Name} & \textbf{Task Assignment} & \textbf{Responsibilities of Files} \\
+        \textbf{No.} & \textbf{ID} & \textbf{Full Name} & \textbf{Task Assignment (Role)} & \textbf{Files} \\
         \hline
-        1 & 25125083 & Nguyễn Đình Minh Huy & \small \textbullet\ Setup Project \newline \textbullet\ Distribute Work \newline \textbullet\ <Comment> \newline \textbullet\ <Comment> & <Comment> \\
+        
+        % MEMBER 1: HUY (Updated: Models + Utils + Cross-Platform)
+        1 & 25125083 & Nguyễn Đình Minh Huy & 
+        \textbf{Role: Core \& Data Engineer} \newline
+        \small 
+        $\bullet$ \textbf{Core:} Designed custom \texttt{ArrayList} \& \texttt{HashMap} (No STL). \newline
+        $\bullet$ \textbf{Models:} Implemented all Entity classes (\texttt{Transaction}, \texttt{Wallet}, etc.). \newline
+        $\bullet$ \textbf{Infra:} Built Thread-safe Auto-Save \& Binary Serialization. \newline
+        $\bullet$ \textbf{System:} Ensured Cross-Platform (Win/Mac) compatibility. & 
+        \small \texttt{src/Utils/*} \newline \texttt{src/Models/*} \newline \texttt{BinaryHelper.cpp} \\
         \hline
-        2 & 251250xx & Lê Trần Hoàng Long & \small \textbullet\ <Comment> \newline \textbullet\ <Comment> \newline \textbullet\ <Comment> \newline \textbullet\ <Comment> & <Comment> \\
+
+        % MEMBER 2: LONG (Updated: Logic Only)
+        2 & 25125087 & Lê Trần Hoàng Long & 
+        \textbf{Role: Logic Developer} \newline
+        \small 
+        $\bullet$ \textbf{Controller:} Implemented \texttt{AppController} business logic. \newline
+        $\bullet$ \textbf{Algorithms:} Developed filtering algorithms (Lambda predicates). \newline
+        $\bullet$ \textbf{Reporting:} Built Aggregation logic for financial stats. & 
+        \small \texttt{AppController.cpp} \\
         \hline
-        3 & 251250xx & Trân Đức Toàn & \small \textbullet\ <Comment> \newline \textbullet\ <Comment> \newline \textbullet\ <Comment> \newline \textbullet\ <Comment> & <Comment> \\
+
+        % MEMBER 3: TOAN (Updated: UI Only)
+        3 & 25125091 & Trần Đức Toàn & 
+        \textbf{Role: UI/UX Developer} \newline
+        \small 
+        $\bullet$ \textbf{Views:} Designed \texttt{ConsoleView} for tables/menus. \newline
+        $\bullet$ \textbf{Validation:} Implemented \texttt{InputValidator} for robust input. \newline
+        $\bullet$ \textbf{Layout:} Managed Dashboard \& visual components. & 
+        \small \texttt{src/Views/*} \newline \texttt{DashBoard.cpp} \\
         \hline
     \end{tabular}
+    \caption{Distribution of responsibilities.}
+    \label{tab:task_assignment}
 \end{table}
+
+\subsection{Collaboration Tools}
+\begin{itemize}
+    \item \textbf{Version Control:} GitHub (Mandatory) - All members contributed via individual commits.
+    \item \textbf{Communication:} Discord/Zalo - Used for daily stand-up meetings and bug tracking.
+\end{itemize}
 
 \pagebreak

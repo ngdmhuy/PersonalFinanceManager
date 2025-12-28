@@ -1,0 +1,49 @@
+\section{System Implementation Details}
+
+\subsection{Data Modeling \& Class Design}
+The application utilizes a strict Object-Oriented design to represent financial entities. The data model is divided into three distinct categories: Core Transactions, Automation Templates, and Master Data.
+
+\subsubsection{Transaction Hierarchy (Polymorphism)}
+The core of the system is the \texttt{Transaction} family, designed to treat Incomes and Expenses uniformly while allowing for specific behaviors.
+
+\begin{itemize}
+    \item \textbf{Base Class (\texttt{Transaction}):} An abstract class that encapsulates shared attributes:
+    \begin{itemize}
+        \item \texttt{id} (String): Unique UUID for the record.
+        \item \texttt{amount} (Double): The monetary value.
+        \item \texttt{date} (\texttt{Date}): Custom date object for chronological sorting.
+        \item \texttt{walletId} (String): Foreign key linking to a specific Wallet.
+    \end{itemize}
+    \item \textbf{Derived Class (\texttt{Income}):} Inherits from \texttt{Transaction}.
+    \item \textbf{Derived Class (\texttt{Expense}):} Inherits from \texttt{Transaction}.
+    \item \textbf{Design Rationale:} By using inheritance, we can store all records in a single container (\texttt{ArrayList<Transaction*>}). This simplifies global operations like "Calculate Total Balance" or "Sort by Date," as the system iterates through one list rather than two separate ones.
+\end{itemize}
+
+\subsubsection{Automation Model (\texttt{RecurringTransaction})}
+This class operates independently from the main transaction list. It acts as a "Factory" or "Template."
+\begin{itemize}
+    \item \textbf{Attributes:} Stores scheduling logic (\texttt{Frequency}, \texttt{StartDate}, \texttt{EndDate}) and a snapshot of the transaction data to be created.
+    \item \textbf{Behavior:} It contains a \texttt{GenerateTransaction()} method. When the \texttt{AppController} detects a due date, this method instantiates a new concrete \texttt{Income} or \texttt{Expense} object, effectively cloning the template into a real record.
+\end{itemize}
+
+\subsubsection{Master Data Entities}
+These distinct classes serve as reference data for validation and categorization.
+\begin{itemize}
+    \item \textbf{\texttt{Wallet}:} Represents a storage location. It maintains a mutable \texttt{balance} attribute that is updated whenever a transaction is added or removed.
+    \item \textbf{\texttt{Category}:} Represents expense classifications (e.g., "Food", "Rent").
+    \item \texttt{\textbf{IncomeSource}:} Represents income origins (e.g., "Salary", "Bonus").
+\end{itemize}
+
+\subsection{Binary Persistence Engine}
+To meet the requirement for binary storage[cite: 70], we developed the \texttt{BinaryFileHelper} utility.
+\begin{itemize}
+    \item \textbf{Serialization:} Data is written directly as bytes using \texttt{ofstream::write}. Variable-length strings are prefixed with a size header to ensure correct reading.
+    \item \textbf{The Factory Pattern:} A significant challenge was deserializing polymorphic objects. We solved this by writing a "Type Identifier" (Integer) before each object in the file. During reading, the \texttt{Transaction::FromBinary} factory method reads this ID first and dynamically instantiates the correct subclass (\texttt{Income} or \texttt{Expense}).
+\end{itemize}
+
+\subsection{Cross-Platform Compatibility}
+As a console application, ensuring consistent behavior across Windows and macOS was a priority.
+\begin{itemize}
+    \item \textbf{Build System:} We utilized \textbf{CMake} to abstract compiler differences. We provided a \texttt{.bat} script for Windows (auto-detecting MinGW or Visual Studio) and a \texttt{.command} script for macOS (using Clang/Make).
+    \item \textbf{Terminal Abstraction:} We implemented a \texttt{PlatformUtils} module. It uses preprocessor directives (\texttt{\#ifdef \_WIN32}) to switch between Windows API commands (e.g., \texttt{cls}) and POSIX commands (e.g., ANSI escape codes) for clearing the screen and handling unbuffered input.
+\end{itemize}

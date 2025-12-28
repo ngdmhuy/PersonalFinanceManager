@@ -27,7 +27,7 @@ class Transaction {
 protected:
     std::string id;
     std::string walletId;
-    std::string categoryId; // Note: For Income, this might be SourceId
+    std::string categoryId; // categoryId and sourceId
     double amount;
     std::string description;
     Date date;
